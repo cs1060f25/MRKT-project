@@ -1,0 +1,105 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Note: SQLite doesn't support enums natively
+// Valid values enforced by Zod validation in application code
+// UserRole: "USER" | "ADMIN"
+// TicketFormat: "QR_CODE" | "EVENTBRITE_LINK"
+// ListingStatus: "ACTIVE" | "SOLD" | "CANCELLED"
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  role      String   @default("USER")
+  createdAt DateTime @default(now())
+
+  listings      Listing[]
+  tradesBuyer   Trade[]   @relation("BuyerTrades")
+  tradesSeller  Trade[]   @relation("SellerTrades")
+  authTokens    AuthToken[]
+}
+
+model AuthToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String?
+  email     String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  clubName    String
+
+  // Event details
+  eventDateTime DateTime
+  venue         String
+
+  // Pricing
+  retailPrice  Float
+  maxResaleCap Float?  // Optional percentage (e.g., 150 for 150%)
+
+  // Ticket configuration
+  ticketFormat String
+
+  // Listing window
+  listingOpenTime  DateTime
+  listingCloseTime DateTime
+
+  // Resale control
+  resalesEnabled Boolean @default(true)
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  listings Listing[]
+}
+
+model Listing {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  price     Float
+  status    String   @default("ACTIVE")
+  createdAt DateTime @default(now())
+
+  event  Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trades Trade[]
+
+  @@index([eventId])
+  @@index([userId])
+  @@index([status])
+}
+
+model Trade {
+  id          String   @id @default(cuid())
+  listingId   String
+  buyerId     String
+  sellerId    String
+  price       Float
+  completedAt DateTime @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyer   User    @relation("BuyerTrades", fields: [buyerId], references: [id], onDelete: Cascade)
+  seller  User    @relation("SellerTrades", fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+  @@index([buyerId])
+  @@index([sellerId])
+}
