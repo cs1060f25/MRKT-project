@@ -7,6 +7,7 @@ A transparent event ticket marketplace for Harvard Business School, built with N
 ## Project Description
 An anonymous marketplace for verified HBS students enables transparent resale of club event tickets through hourly modified Dutch auctions. Sellers upload redacted QR tickets with price floors, and buyers place bids with cards on file for instant, private matching. The platform streamlines last-minute trades while providing clubs with privacy-safe demand insights to inform future pricing.
 
+
 ## Features
 
 ### Admin Features
