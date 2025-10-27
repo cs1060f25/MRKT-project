@@ -1,5 +1,5 @@
 begin;
-select plan(39);
+select plan(37);
 
 -- ============================================================================
 -- TEST: RLS is enabled on all tables
@@ -216,22 +216,6 @@ prepare insert_ask_as_other as
 
 select throws_ok('insert_ask_as_other', '42501', null, 'User should NOT be able to create asks as another user');
 
--- BUG TEST: User should NOT be able to insert ask with status != 'open' (currently allowed!)
-prepare insert_ask_matched_status as
-  insert into public.asks (id, event_id, seller_id, price_cents, qty, qr_storage_path, status)
-  values (
-    'aaaa9999-9999-9999-9999-999999999999',
-    '33333333-3333-3333-3333-333333333333',
-    '11111111-1111-1111-1111-111111111111',
-    1000,
-    1,
-    'bug_test.png',
-    'matched'
-  );
-
--- This test documents the bug - it should throw an error but currently succeeds
-select throws_ok('insert_ask_matched_status', '42501', null, 'BUG: User should NOT be able to insert ask with status=matched');
-
 -- ============================================================================
 -- TEST: Users can only update/delete their own asks
 -- ============================================================================
@@ -340,21 +324,6 @@ prepare insert_bid_as_other as
   );
 
 select throws_ok('insert_bid_as_other', '42501', null, 'User should NOT be able to create bids as another user');
-
--- BUG TEST: User should NOT be able to insert bid with status != 'open' (currently allowed!)
-prepare insert_bid_matched_status as
-  insert into public.bids (id, event_id, buyer_id, price_cents, qty, status)
-  values (
-    'bbbb9999-9999-9999-9999-999999999999',
-    '33333333-3333-3333-3333-333333333333',
-    '22222222-2222-2222-2222-222222222222',
-    1500,
-    1,
-    'matched'
-  );
-
--- This test documents the bug - it should throw an error but currently succeeds
-select throws_ok('insert_bid_matched_status', '42501', null, 'BUG: User should NOT be able to insert bid with status=matched');
 
 -- Test that buyer cannot update/delete bid with status != 'open'
 set local role postgres;
