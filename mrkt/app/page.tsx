@@ -1,3 +1,7 @@
+'use client';
+
+import { SignedOut, SignInButton } from "@clerk/nextjs";
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-white">
@@ -9,13 +13,17 @@ export default function Home() {
               The HBS exclusive market for fair event pricing and ticket discovery.
             </p>
             <div className="mt-8">
-              <button
-                type="button"
-                className="inline-flex items-center rounded-full bg-white px-6 py-3 font-medium text-[var(--color-crimson)] shadow-sm transition-colors hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-                aria-label="Log in"
-              >
-                Log in
-              </button>
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full bg-white px-6 py-3 font-medium text-[var(--color-crimson)] shadow-sm transition-colors hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                    aria-label="Log in"
+                  >
+                    Log in
+                  </button>
+                </SignInButton>
+              </SignedOut>
             </div>
           </div>
         </section>
