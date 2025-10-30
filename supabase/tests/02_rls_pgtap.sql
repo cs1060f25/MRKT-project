@@ -67,7 +67,7 @@ select policies_are(
 select policies_are(
   'public',
   'tickets',
-  ARRAY['tickets_select_winner_or_seller'],
+  ARRAY['tickets_select_winner_or_seller', 'tickets_update_winner_or_seller'],
   'tickets table should have expected policies'
 );
 
