@@ -1,6 +1,41 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { clerkMiddleware, getAuth } from "@clerk/nextjs/server";
+import { createMiddlewareClient } from "@/lib/supabase/middleware";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export default clerkMiddleware();
+export default clerkMiddleware(async (auth, req: NextRequest) => {
+  // Get authentication state
+  const { userId, getToken } = await auth();
+
+  // Create response
+  const res = NextResponse.next();
+
+  // Create Supabase client for middleware
+  const supabase = createMiddlewareClient(req, res);
+
+  // If user is authenticated, sync Clerk JWT with Supabase session
+  if (userId) {
+    try {
+      // Get Clerk JWT with Supabase claims
+      const token = await getToken({ template: "supabase" });
+
+      if (token) {
+        // Set Supabase session with Clerk JWT
+        await supabase.auth.setSession({
+          access_token: token,
+          refresh_token: "", // Clerk manages refresh
+        });
+      }
+    } catch (error) {
+      console.error("Failed to sync Clerk JWT with Supabase:", error);
+    }
+  } else {
+    // User not authenticated, ensure Supabase session is cleared
+    await supabase.auth.signOut();
+  }
+
+  return res;
+});
 
 export const config = {
   matcher: [
