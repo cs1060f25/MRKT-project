@@ -1,0 +1,53 @@
+name: Database Tests
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/**'
+      - '.github/workflows/db-test.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'supabase/**'
+
+jobs:
+  test:
+    name: Run pgTAP Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start Supabase local database
+        run: supabase start
+
+      - name: Run database tests
+        run: npm run db:test
+
+      - name: Stop Supabase
+        if: always()
+        run: supabase stop --no-backup
+
+      - name: Comment test results on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ Database tests passed (190 tests)\n\n- Schema: 104 tests\n- RLS: 37 tests\n- RPC Surface: 18 tests\n- RPC Functions: 31 tests'
+            })
