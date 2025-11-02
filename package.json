@@ -1,0 +1,11 @@
+{
+  "name": "mrkt-project",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "db:reset": "supabase db reset",
+    "db:test": "npm run db:reset && supabase test db supabase/tests/01_schema_pgtap.sql && supabase test db supabase/tests/02_rls_pgtap.sql && supabase test db supabase/tests/03_rpc_surface_pgtap.sql && supabase test db supabase/tests/04_rpc_functions_pgtap.sql",
+    "db:test:all": "npm run db:reset && supabase test db",
+    "db:push": "supabase db push"
+  }
+}

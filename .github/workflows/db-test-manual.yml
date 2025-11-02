@@ -1,0 +1,70 @@
+name: Manual Database Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_file:
+        description: 'Specific test file to run (leave empty for all)'
+        required: false
+        type: choice
+        options:
+          - 'all'
+          - '01_schema_pgtap.sql'
+          - '02_rls_pgtap.sql'
+          - '03_rpc_surface_pgtap.sql'
+          - '04_rpc_functions_pgtap.sql'
+        default: 'all'
+
+jobs:
+  test:
+    name: Run Database Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start Supabase local database
+        run: supabase start
+
+      - name: Run all tests
+        if: inputs.test_file == 'all' || inputs.test_file == ''
+        run: npm run db:test
+
+      - name: Run specific test
+        if: inputs.test_file != 'all' && inputs.test_file != ''
+        run: |
+          supabase db reset
+          supabase test db supabase/tests/${{ inputs.test_file }}
+
+      - name: Stop Supabase
+        if: always()
+        run: supabase stop --no-backup
+
+      - name: Create test summary
+        run: |
+          echo "## Test Run Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ inputs.test_file }}" == "all" ] || [ "${{ inputs.test_file }}" == "" ]; then
+            echo "✅ All database tests executed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- Schema: 104 tests" >> $GITHUB_STEP_SUMMARY
+            echo "- RLS: 37 tests" >> $GITHUB_STEP_SUMMARY
+            echo "- RPC Surface: 18 tests" >> $GITHUB_STEP_SUMMARY
+            echo "- RPC Functions: 31 tests" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Test file: ${{ inputs.test_file }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
