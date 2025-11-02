@@ -5,6 +5,7 @@ import {
   SignedIn,
   UserButton,
 } from "@clerk/nextjs";
+import { SupabaseProvider } from "@/providers/supabase-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -34,12 +35,14 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
-          <header>
-            <SignedIn>
-              <UserButton />
-            </SignedIn>
-          </header>
-          {children}
+          <SupabaseProvider>
+            <header>
+              <SignedIn>
+                <UserButton />
+              </SignedIn>
+            </header>
+            {children}
+          </SupabaseProvider>
         </body>
       </html>
     </ClerkProvider>
