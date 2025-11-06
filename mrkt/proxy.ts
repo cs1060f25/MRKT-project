@@ -19,12 +19,23 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
       // Get Clerk JWT with Supabase claims
       const token = await getToken({ template: "supabase" });
 
+      console.log("[Middleware] Clerk userId:", userId);
+      console.log("[Middleware] Got Supabase JWT token:", token ? "yes" : "no");
+
       if (token) {
         // Set Supabase session with Clerk JWT
-        await supabase.auth.setSession({
+        const { data, error } = await supabase.auth.setSession({
           access_token: token,
           refresh_token: "", // Clerk manages refresh
         });
+        console.log(
+          "[Middleware] Supabase session set:",
+          error ? `error: ${error.message}` : "success"
+        );
+      } else {
+        console.warn(
+          "[Middleware] No token received - JWT template 'supabase' might not exist"
+        );
       }
     } catch (error) {
       console.error("Failed to sync Clerk JWT with Supabase:", error);

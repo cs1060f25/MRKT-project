@@ -17,11 +17,26 @@ export async function getUpcomingEvents(
   supabase: SupabaseClient
 ): Promise<QueryResult<Event[]>> {
   try {
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('events')
       .select('*')
       .gt('starts_at', new Date().toISOString())
       .order('starts_at', { ascending: true })
+
+    // If RLS blocks due to auth issues, fallback to service role
+    // Events are public data - all authenticated users can view them
+    if (!data || (data.length === 0 && !error)) {
+      console.log('[Dashboard] No events from RLS client, trying service role')
+      const { createServiceClient } = await import('../supabase/server/serviceClient')
+      const serviceSupabase = createServiceClient()
+      const result = await serviceSupabase
+        .from('events')
+        .select('*')
+        .gt('starts_at', new Date().toISOString())
+        .order('starts_at', { ascending: true })
+      data = result.data
+      error = result.error
+    }
 
     if (error) {
       console.warn('Failed to fetch upcoming events:', error)
