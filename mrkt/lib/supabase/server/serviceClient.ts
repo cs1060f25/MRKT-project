@@ -8,7 +8,7 @@
  *
  * DO NOT import this file in client components or expose it to the browser.
  * Only use in:
- * - API routes (app/api/**/route.ts)
+ * - API routes (route handlers in app/api directory)
  * - Server actions ('use server')
  * - Edge functions
  *
