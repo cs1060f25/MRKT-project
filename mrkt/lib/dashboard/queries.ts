@@ -27,8 +27,8 @@ export async function getUpcomingEvents(
     // Events are public data - all authenticated users can view them
     if (!data || (data.length === 0 && !error)) {
       console.log('[Dashboard] No events from RLS client, trying service role')
-      const { createServiceClient } = await import('../supabase/server/serviceClient')
-      const serviceSupabase = createServiceClient()
+      const { getServiceClient } = await import('../supabase/server/serviceClient')
+      const serviceSupabase = getServiceClient({ functionName: 'dashboard-events' })
       const result = await serviceSupabase
         .from('events')
         .select('*')
