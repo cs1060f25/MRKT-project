@@ -27,6 +27,7 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
   const [priceInDollars, setPriceInDollars] = useState('')
   const [quantity, setQuantity] = useState('')
   const [qrFile, setQrFile] = useState<File | null>(null)
+  const [qrFileData, setQrFileData] = useState<{ blob: Blob; name: string; type: string } | null>(null)
 
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -34,6 +35,24 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
   const [success, setSuccess] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+
+  // Handle file selection - read file into blob immediately to prevent stale references
+  const handleFileSelect = async (file: File | null) => {
+    setQrFile(file)
+
+    if (file) {
+      try {
+        // Read file into blob to prevent ERR_UPLOAD_FILE_CHANGED errors
+        const blob = new Blob([await file.arrayBuffer()], { type: file.type })
+        setQrFileData({ blob, name: file.name, type: file.type })
+      } catch (err) {
+        console.error('Error reading file:', err)
+        setQrFileData(null)
+      }
+    } else {
+      setQrFileData(null)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -97,8 +116,16 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
       }
 
       // Step 2: Upload QR code via API endpoint
+      if (!qrFileData) {
+        setError('File data not available. Please select the file again.')
+        setIsSubmitting(false)
+        return
+      }
+
       const formData = new FormData()
-      formData.append('file', qrFile)
+      // Create a new File from the blob to ensure it's valid
+      const fileToUpload = new File([qrFileData.blob], qrFileData.name, { type: qrFileData.type })
+      formData.append('file', fileToUpload)
       formData.append('eventId', eventId)
 
       setUploadProgress(50) // Show progress
@@ -249,7 +276,7 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
       {/* QR Code Upload */}
       <QRUploader
         file={qrFile}
-        onFileSelect={setQrFile}
+        onFileSelect={handleFileSelect}
         disabled={isSubmitting}
         error={validationErrors.qrFile}
       />
