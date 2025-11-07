@@ -21,7 +21,7 @@ const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { askId: string } }
+  { params }: { params: Promise<{ askId: string }> }
 ) {
   try {
     // ========================================================================
@@ -35,7 +35,7 @@ export async function POST(
       )
     }
 
-    const { askId } = params
+    const { askId } = await params
 
     // ========================================================================
     // 2. Get Form Data (File Upload)
