@@ -13,8 +13,6 @@ import { validateListingForm } from '@/lib/sell/validation'
 import { ErrorBanner } from '@/components/common/ErrorBanner'
 import { SuccessMessage } from '@/components/common/SuccessMessage'
 import { QRUploader } from '@/components/sell/QRUploader'
-import { createBrowserClient } from '@/lib/supabase/client'
-import { uploadQRCode } from '@/lib/supabase/storage'
 import type { EventOption } from '@/lib/sell/types'
 
 interface CreateListingFormProps {
@@ -98,24 +96,30 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
         return
       }
 
-      // Step 2: Upload QR code to storage
-      const supabase = createBrowserClient()
-      const uploadResult = await uploadQRCode(
-        supabase,
-        qrFile,
-        eventId,
-        result.askId,
-        (progress) => setUploadProgress(progress)
-      )
+      // Step 2: Upload QR code via API endpoint
+      const formData = new FormData()
+      formData.append('file', qrFile)
+      formData.append('eventId', eventId)
 
-      if (!uploadResult.success) {
+      setUploadProgress(50) // Show progress
+
+      const uploadResponse = await fetch(`/api/listings/${result.askId}/upload-qr`, {
+        method: 'POST',
+        body: formData,
+      })
+
+      const uploadResult = await uploadResponse.json()
+
+      if (!uploadResponse.ok || uploadResult.error) {
         setError(
-          `Listing created, but QR upload failed: ${uploadResult.error}. ` +
+          `Listing created, but QR upload failed: ${uploadResult.error || 'Unknown error'}. ` +
           'Please try uploading your QR code again from your listings page.'
         )
         setIsSubmitting(false)
         return
       }
+
+      setUploadProgress(100)
 
       // Success!
       setSuccess(true)
