@@ -17,8 +17,8 @@ import { z } from 'zod'
 export const createListingSchema = z.object({
   eventId: z
     .string()
-    .uuid('Please select a valid event')
-    .min(1, 'Event is required'),
+    .min(1, 'Event is required')
+    .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, 'Please select a valid event'),
 
   priceInDollars: z
     .number({

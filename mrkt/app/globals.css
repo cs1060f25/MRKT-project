@@ -12,6 +12,7 @@
   --font-mono: var(--font-geist-mono);
   /* Brand */
   --color-crimson: #A51C30;
+  --color-crimson-dark: #8B1626;
 }
 
 body {

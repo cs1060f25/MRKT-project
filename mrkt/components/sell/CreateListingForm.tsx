@@ -9,8 +9,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createBrowserClient } from '@supabase/ssr'
-import { createAsk } from '@/lib/supabase/rpc'
 import { validateListingForm } from '@/lib/sell/validation'
 import { ErrorBanner } from '@/components/common/ErrorBanner'
 import { SuccessMessage } from '@/components/common/SuccessMessage'
@@ -34,12 +32,6 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
   const [success, setSuccess] = useState(false)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
-  // Supabase client (browser)
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -59,27 +51,37 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
     if (!validation.success) {
       // Collect validation errors
       const errors: Record<string, string> = {}
-      validation.error.errors.forEach((err) => {
-        const field = err.path[0] as string
-        errors[field] = err.message
-      })
+      if (validation.error?.errors) {
+        validation.error.errors.forEach((err) => {
+          const field = err.path[0] as string
+          errors[field] = err.message
+        })
+      }
       setValidationErrors(errors)
       return
     }
 
-    // Submit to RPC
+    // Submit to API
     setIsSubmitting(true)
 
     try {
-      const result = await createAsk(supabase, {
-        event_id: eventId,
-        price_cents: Math.round(priceNum * 100), // Convert dollars to cents
-        qty: qtyNum,
-        qr_storage_path: `pending-upload/${crypto.randomUUID()}`, // Stub for now
+      const response = await fetch('/api/listings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          event_id: eventId,
+          price_cents: Math.round(priceNum * 100), // Convert dollars to cents
+          qty: qtyNum,
+          qr_storage_path: `pending-upload/${crypto.randomUUID()}`, // Stub for now
+        }),
       })
 
-      if (result.error) {
-        setError(result.error)
+      const result = await response.json()
+
+      if (!response.ok || result.error) {
+        setError(result.error || 'Failed to create listing')
         setIsSubmitting(false)
         return
       }
@@ -129,11 +131,15 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
           disabled={isSubmitting}
         >
           <option value="">Select an event...</option>
-          {events.map((event) => (
-            <option key={event.id} value={event.id}>
-              {event.title} - {event.org} ({new Date(event.starts_at).toLocaleDateString()})
-            </option>
-          ))}
+          {events.map((event) => {
+            // Format date consistently to avoid hydration mismatch
+            const dateStr = event.starts_at.split('T')[0] // Get YYYY-MM-DD
+            return (
+              <option key={event.id} value={event.id}>
+                {event.title} - {event.org} ({dateStr})
+              </option>
+            )
+          })}
         </select>
         {validationErrors.eventId && (
           <p className="mt-2 text-sm text-red-600">{validationErrors.eventId}</p>
