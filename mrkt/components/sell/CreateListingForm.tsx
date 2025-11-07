@@ -12,6 +12,9 @@ import { useRouter } from 'next/navigation'
 import { validateListingForm } from '@/lib/sell/validation'
 import { ErrorBanner } from '@/components/common/ErrorBanner'
 import { SuccessMessage } from '@/components/common/SuccessMessage'
+import { QRUploader } from '@/components/sell/QRUploader'
+import { createBrowserClient } from '@/lib/supabase/client'
+import { uploadQRCode } from '@/lib/supabase/storage'
 import type { EventOption } from '@/lib/sell/types'
 
 interface CreateListingFormProps {
@@ -25,11 +28,13 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
   const [eventId, setEventId] = useState('')
   const [priceInDollars, setPriceInDollars] = useState('')
   const [quantity, setQuantity] = useState('')
+  const [qrFile, setQrFile] = useState<File | null>(null)
 
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -61,10 +66,18 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
       return
     }
 
+    // Validate QR file is selected
+    if (!qrFile) {
+      setValidationErrors({ qrFile: 'QR code image is required' })
+      return
+    }
+
     // Submit to API
     setIsSubmitting(true)
+    setUploadProgress(0)
 
     try {
+      // Step 1: Create listing (ask) in database
       const response = await fetch('/api/listings', {
         method: 'POST',
         headers: {
@@ -74,7 +87,6 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
           event_id: eventId,
           price_cents: Math.round(priceNum * 100), // Convert dollars to cents
           qty: qtyNum,
-          qr_storage_path: `pending-upload/${crypto.randomUUID()}`, // Stub for now
         }),
       })
 
@@ -82,6 +94,25 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
 
       if (!response.ok || result.error) {
         setError(result.error || 'Failed to create listing')
+        setIsSubmitting(false)
+        return
+      }
+
+      // Step 2: Upload QR code to storage
+      const supabase = createBrowserClient()
+      const uploadResult = await uploadQRCode(
+        supabase,
+        qrFile,
+        eventId,
+        result.askId,
+        (progress) => setUploadProgress(progress)
+      )
+
+      if (!uploadResult.success) {
+        setError(
+          `Listing created, but QR upload failed: ${uploadResult.error}. ` +
+          'Please try uploading your QR code again from your listings page.'
+        )
         setIsSubmitting(false)
         return
       }
@@ -104,7 +135,7 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
     return (
       <SuccessMessage
         title="Listing Created!"
-        message="Your event listing has been created successfully. Redirecting..."
+        message="Your event listing and QR code have been uploaded successfully. Redirecting..."
       />
     )
   }
@@ -211,6 +242,55 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
         )}
       </div>
 
+      {/* QR Code Upload */}
+      <QRUploader
+        file={qrFile}
+        onFileSelect={setQrFile}
+        disabled={isSubmitting}
+        error={validationErrors.qrFile}
+      />
+
+      {/* Upload Progress */}
+      {isSubmitting && uploadProgress > 0 && (
+        <div className="rounded-md bg-blue-50 p-4">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-blue-400 animate-spin"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+            </div>
+            <div className="ml-3 flex-1">
+              <p className="text-sm font-medium text-blue-800">
+                Uploading QR code... {uploadProgress}%
+              </p>
+              <div className="mt-2 w-full bg-blue-200 rounded-full h-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Submit Button */}
       <div>
         <button
@@ -218,7 +298,11 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
           disabled={isSubmitting}
           className="flex w-full justify-center rounded-md bg-[var(--color-crimson)] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[var(--color-crimson-dark)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-crimson)] disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? 'Creating Listing...' : 'Create Listing'}
+          {isSubmitting
+            ? uploadProgress > 0
+              ? 'Uploading QR Code...'
+              : 'Creating Listing...'
+            : 'Create Listing'}
         </button>
       </div>
     </form>

@@ -77,14 +77,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { event_id, price_cents, qty, qr_storage_path } = body
+    const { event_id, price_cents, qty } = body
 
     // Validate required fields
     const missingFields = []
     if (!event_id) missingFields.push('event_id')
     if (price_cents === undefined || price_cents === null) missingFields.push('price_cents')
     if (qty === undefined || qty === null) missingFields.push('qty')
-    if (!qr_storage_path) missingFields.push('qr_storage_path')
 
     if (missingFields.length > 0) {
       return NextResponse.json(
@@ -177,9 +176,13 @@ export async function POST(request: NextRequest) {
     }
 
     // ========================================================================
-    // 4. Generate UUID for Ask
+    // 4. Generate UUID for Ask and QR Storage Path
     // ========================================================================
     const askId = crypto.randomUUID()
+
+    // Generate proper storage path: {event_id}/{ask_id}/qr.png
+    // User will upload file to this path after ask creation
+    const qrStoragePath = `${event_id}/${askId}/qr.png`
 
     // ========================================================================
     // 5. Insert Ask into Database
@@ -192,7 +195,7 @@ export async function POST(request: NextRequest) {
         event_id,
         price_cents,
         qty,
-        qr_storage_path,
+        qr_storage_path: qrStoragePath,
         status: 'open',
       })
       .select('id, event_id, price_cents, qty, status, created_at')
@@ -229,6 +232,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       askId: ask.id,
       error: null,
+      uploadPath: qrStoragePath, // Path where client should upload QR code
       ask: {
         id: ask.id,
         eventId: ask.event_id,
