@@ -52,10 +52,29 @@ export async function createAsk(
     })
 
     if (error) {
-      console.error('RPC error creating ask:', error)
+      // Log FULL error object for debugging
+      console.error('[createAsk] RPC error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        fullError: JSON.stringify(error, null, 2),
+      })
+
+      // Build detailed error message from all available info
+      const errorParts: string[] = []
+      if (error.message) errorParts.push(error.message)
+      if (error.details) errorParts.push(`Details: ${error.details}`)
+      if (error.hint) errorParts.push(`Hint: ${error.hint}`)
+      if (error.code) errorParts.push(`Code: ${error.code}`)
+
+      const detailedError = errorParts.length > 0
+        ? errorParts.join(' | ')
+        : 'Failed to create listing (no error details available)'
+
       return {
         askId: null,
-        error: error.message || 'Failed to create listing',
+        error: detailedError,
       }
     }
 
@@ -64,7 +83,7 @@ export async function createAsk(
       error: null,
     }
   } catch (err) {
-    console.error('Unexpected error creating ask:', err)
+    console.error('[createAsk] Unexpected error:', err)
     return {
       askId: null,
       error: err instanceof Error ? err.message : 'An unexpected error occurred',
@@ -103,10 +122,29 @@ export async function createBid(
     })
 
     if (error) {
-      console.error('RPC error creating bid:', error)
+      // Log FULL error object for debugging
+      console.error('[createBid] RPC error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        fullError: JSON.stringify(error, null, 2),
+      })
+
+      // Build detailed error message from all available info
+      const errorParts: string[] = []
+      if (error.message) errorParts.push(error.message)
+      if (error.details) errorParts.push(`Details: ${error.details}`)
+      if (error.hint) errorParts.push(`Hint: ${error.hint}`)
+      if (error.code) errorParts.push(`Code: ${error.code}`)
+
+      const detailedError = errorParts.length > 0
+        ? errorParts.join(' | ')
+        : 'Failed to create bid (no error details available)'
+
       return {
         bidId: null,
-        error: error.message || 'Failed to create bid',
+        error: detailedError,
       }
     }
 
@@ -115,7 +153,7 @@ export async function createBid(
       error: null,
     }
   } catch (err) {
-    console.error('Unexpected error creating bid:', err)
+    console.error('[createBid] Unexpected error:', err)
     return {
       bidId: null,
       error: err instanceof Error ? err.message : 'An unexpected error occurred',
