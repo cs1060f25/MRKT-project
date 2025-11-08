@@ -46,6 +46,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     // Wait for Clerk to load
     if (!isLoaded) {
       setIsReady(false)
+      setSupabase(null)
       return
     }
 
@@ -55,9 +56,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
-    setSupabase(client)
-
-    // Sync Clerk session with Supabase
+    // Sync Clerk session with Supabase FIRST, then expose client
     const syncSession = async () => {
       try {
         if (userId) {
@@ -82,12 +81,13 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         console.error('[SupabaseProvider] Error syncing session:', error)
       } finally {
-        // Mark as ready even if there's an error (user might not be signed in)
+        // ONLY expose client to components AFTER session is set
+        setSupabase(client)
         setIsReady(true)
       }
     }
 
-    // Wait for session sync to complete before marking as ready
+    // Wait for session sync to complete before exposing client
     syncSession()
   }, [getToken, userId, isLoaded])
 
