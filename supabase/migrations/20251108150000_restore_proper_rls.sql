@@ -15,27 +15,19 @@
 -- PART 1: Create JWT Helper Function
 -- ============================================================================
 
--- Helper function to extract user ID from JWT claims
--- This replaces auth.uid() which is unreliable with Clerk
+-- Helper function to get authenticated user ID
+-- Works with Clerk JWTs by using Supabase's built-in auth.uid()
 CREATE OR REPLACE FUNCTION public.current_user_id()
 RETURNS text
-LANGUAGE plpgsql
+LANGUAGE sql
 STABLE
 SECURITY DEFINER
 AS $$
-BEGIN
-  -- Extract 'sub' claim from request.jwt.claims
-  -- This is set by Clerk JWT and contains the Clerk user ID
-  RETURN nullif(current_setting('request.jwt.claims', true)::json->>'sub', '');
-EXCEPTION
-  WHEN OTHERS THEN
-    -- If JWT claims are not available or invalid, return NULL
-    RETURN NULL;
-END;
+  SELECT auth.uid()::text;
 $$;
 
 COMMENT ON FUNCTION public.current_user_id() IS
-  'Extract user ID from JWT claims. Use this instead of auth.uid() for Clerk compatibility.';
+  'Get authenticated user ID from JWT. Works with Clerk because Supabase extracts the sub claim automatically.';
 
 -- Grant execute to authenticated and anon roles
 GRANT EXECUTE ON FUNCTION public.current_user_id() TO authenticated, anon;
