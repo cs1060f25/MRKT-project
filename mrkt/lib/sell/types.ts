@@ -21,6 +21,7 @@ export interface CreateAskParams {
   price_cents: number
   qty: number
   qr_storage_path: string
+  seller_id: string
 }
 
 /**

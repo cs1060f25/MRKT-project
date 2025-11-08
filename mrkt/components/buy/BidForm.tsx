@@ -16,10 +16,11 @@ import { SuccessMessage } from '@/components/common/SuccessMessage'
 
 interface BidFormProps {
   eventId: string
+  userId: string
   onSuccess?: () => void
 }
 
-export function BidForm({ eventId, onSuccess }: BidFormProps) {
+export function BidForm({ eventId, userId, onSuccess }: BidFormProps) {
   // Form state
   const [priceInDollars, setPriceInDollars] = useState('')
   const [quantity, setQuantity] = useState('')
@@ -70,7 +71,7 @@ export function BidForm({ eventId, onSuccess }: BidFormProps) {
       const priceCents = Math.round(priceNum * 100)
 
       // Call RPC function
-      const result = await createBid(supabase, eventId, priceCents, qtyNum)
+      const result = await createBid(supabase, eventId, priceCents, qtyNum, userId)
 
       if (result.error) {
         setError(result.error)

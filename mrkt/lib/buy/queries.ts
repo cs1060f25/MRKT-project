@@ -27,7 +27,7 @@ export async function getEventDetails(
       .single()
 
     // If RLS blocks, try with service role (events are public data)
-    if (!data && !error) {
+    if (!data) {
       console.log('[Buy] Event not found with RLS client, trying service role')
       const { getServiceClient } = await import('../supabase/server/serviceClient')
       const serviceSupabase = getServiceClient({ functionName: 'buy-event-details' })

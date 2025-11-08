@@ -92,10 +92,10 @@ export function MarketTable({ events, bookPreviews }: MarketTableProps) {
                 )}
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                   <Link
-                    href={`/events/${event.id}`}
+                    href={`/buy/${event.id}`}
                     className="text-indigo-600 hover:text-indigo-900 font-medium"
                   >
-                    View Event
+                    Place Bid
                   </Link>
                 </td>
               </tr>

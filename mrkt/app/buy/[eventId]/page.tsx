@@ -262,7 +262,7 @@ export default async function BuyEventPage({
               Enter the maximum price you're willing to pay and the quantity you want
             </p>
           </div>
-          <BidForm eventId={eventId} />
+          <BidForm eventId={eventId} userId={userId} />
         </div>
       </div>
     </div>

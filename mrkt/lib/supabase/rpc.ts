@@ -48,6 +48,7 @@ export async function createAsk(
       price_cents: params.price_cents,
       qty: params.qty,
       qr_storage_path: params.qr_storage_path,
+      seller_id: params.seller_id,
     })
 
     if (error) {
@@ -76,7 +77,6 @@ export async function createAsk(
  *
  * Calls rpc_create_bid which:
  * - Validates inputs (price_cents > 0, qty > 0)
- * - Sets buyer_id to auth.uid() automatically
  * - Inserts into bids table with status='open'
  * - Returns the new bid ID
  *
@@ -84,19 +84,22 @@ export async function createAsk(
  * @param eventId - Event UUID
  * @param priceCents - Price in cents
  * @param qty - Quantity
+ * @param buyerId - Clerk user ID
  * @returns Bid ID if successful, error message if failed
  */
 export async function createBid(
   supabase: SupabaseClient,
   eventId: string,
   priceCents: number,
-  qty: number
+  qty: number,
+  buyerId: string
 ): Promise<{ bidId: string | null; error: string | null }> {
   try {
     const { data, error } = await supabase.rpc('rpc_create_bid', {
       event_id: eventId,
       price_cents: priceCents,
       qty,
+      buyer_id: buyerId,
     })
 
     if (error) {
