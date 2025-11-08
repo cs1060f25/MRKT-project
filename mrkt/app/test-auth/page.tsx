@@ -15,7 +15,7 @@ import { useState } from 'react'
 
 export default function TestAuthPage() {
   const { userId, isSignedIn, getToken } = useAuth()
-  const supabase = useSupabase()
+  const { supabase, isReady } = useSupabase()
 
   const [clerkToken, setClerkToken] = useState<string | null>(null)
   const [decodedToken, setDecodedToken] = useState<any>(null)
@@ -124,15 +124,27 @@ Authentication is working correctly!
                 </p>
               </div>
             </div>
+
+            <div className="flex items-center space-x-3">
+              <span className={`text-2xl ${isReady ? 'text-green-500' : 'text-yellow-500'}`}>
+                {isReady ? '✅' : '⏳'}
+              </span>
+              <div>
+                <p className="font-medium">Authentication Ready</p>
+                <p className="text-sm text-gray-500">
+                  {isReady ? 'Session synced with Clerk JWT' : 'Syncing session...'}
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Test Button */}
           <button
             onClick={runTests}
-            disabled={!isSignedIn || !supabase}
+            disabled={!isSignedIn || !supabase || !isReady}
             className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed mb-6"
           >
-            Run Authentication Tests
+            {!isReady ? 'Initializing...' : 'Run Authentication Tests'}
           </button>
 
           {/* Error Display */}

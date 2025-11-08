@@ -32,15 +32,23 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 type SupabaseContext = {
   supabase: SupabaseClient | null
+  isReady: boolean
 }
 
 const Context = createContext<SupabaseContext | undefined>(undefined)
 
 export function SupabaseProvider({ children }: { children: React.ReactNode }) {
-  const { getToken, userId } = useAuth()
+  const { getToken, userId, isLoaded } = useAuth()
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null)
+  const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
+    // Wait for Clerk to load
+    if (!isLoaded) {
+      setIsReady(false)
+      return
+    }
+
     // Create Supabase client
     const client = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -51,28 +59,40 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
 
     // Sync Clerk session with Supabase
     const syncSession = async () => {
-      if (userId) {
-        // Get Clerk JWT token with Supabase claims
-        const token = await getToken({ template: 'supabase' })
+      try {
+        if (userId) {
+          // Get Clerk JWT token with Supabase claims
+          const token = await getToken({ template: 'supabase' })
 
-        if (token) {
-          // Set the Supabase session using Clerk's JWT
-          await client.auth.setSession({
-            access_token: token,
-            refresh_token: '', // Clerk manages refresh
-          })
+          if (token) {
+            // Set the Supabase session using Clerk's JWT
+            await client.auth.setSession({
+              access_token: token,
+              refresh_token: '', // Clerk manages refresh
+            })
+            console.log('[SupabaseProvider] Session set successfully for user:', userId)
+          } else {
+            console.warn('[SupabaseProvider] No JWT token received from Clerk')
+          }
+        } else {
+          // User signed out, clear Supabase session
+          await client.auth.signOut()
+          console.log('[SupabaseProvider] User signed out, session cleared')
         }
-      } else {
-        // User signed out, clear Supabase session
-        await client.auth.signOut()
+      } catch (error) {
+        console.error('[SupabaseProvider] Error syncing session:', error)
+      } finally {
+        // Mark as ready even if there's an error (user might not be signed in)
+        setIsReady(true)
       }
     }
 
+    // Wait for session sync to complete before marking as ready
     syncSession()
-  }, [getToken, userId])
+  }, [getToken, userId, isLoaded])
 
   return (
-    <Context.Provider value={{ supabase }}>
+    <Context.Provider value={{ supabase, isReady }}>
       {children}
     </Context.Provider>
   )
@@ -85,5 +105,5 @@ export function useSupabase() {
     throw new Error('useSupabase must be used inside SupabaseProvider')
   }
 
-  return context.supabase
+  return context
 }

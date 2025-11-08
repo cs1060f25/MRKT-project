@@ -22,7 +22,7 @@ interface BidFormProps {
 
 export function BidForm({ eventId, userId, onSuccess }: BidFormProps) {
   // Get authenticated Supabase client from provider
-  const supabase = useSupabase()
+  const { supabase, isReady } = useSupabase()
 
   // Form state
   const [priceInDollars, setPriceInDollars] = useState('')
@@ -39,6 +39,12 @@ export function BidForm({ eventId, userId, onSuccess }: BidFormProps) {
     setError(null)
     setValidationErrors({})
     setSuccess(false)
+
+    // Check if authentication is ready
+    if (!isReady) {
+      setError('Authentication is still initializing. Please wait a moment and try again.')
+      return
+    }
 
     // Parse input values
     const priceNum = parseFloat(priceInDollars)
@@ -193,11 +199,16 @@ export function BidForm({ eventId, userId, onSuccess }: BidFormProps) {
         <div>
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={!isReady || isSubmitting}
             className="flex w-full justify-center rounded-md bg-[var(--color-crimson)] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[var(--color-crimson-dark)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-crimson)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? 'Placing Bid...' : 'Place Bid'}
+            {!isReady ? 'Initializing...' : isSubmitting ? 'Placing Bid...' : 'Place Bid'}
           </button>
+          {!isReady && (
+            <p className="mt-2 text-sm text-gray-500 text-center">
+              Setting up authentication...
+            </p>
+          )}
         </div>
       </form>
     </div>
