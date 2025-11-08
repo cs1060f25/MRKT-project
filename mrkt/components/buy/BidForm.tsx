@@ -10,7 +10,7 @@
 import { useState } from 'react'
 import { validateBidForm } from '@/lib/buy/validation'
 import { createBid } from '@/lib/supabase/rpc'
-import { createBrowserClient } from '@/lib/supabase/client'
+import { useSupabase } from '@/providers/supabase-provider'
 import { ErrorBanner } from '@/components/common/ErrorBanner'
 import { SuccessMessage } from '@/components/common/SuccessMessage'
 
@@ -21,6 +21,9 @@ interface BidFormProps {
 }
 
 export function BidForm({ eventId, userId, onSuccess }: BidFormProps) {
+  // Get authenticated Supabase client from provider
+  const supabase = useSupabase()
+
   // Form state
   const [priceInDollars, setPriceInDollars] = useState('')
   const [quantity, setQuantity] = useState('')
@@ -65,12 +68,17 @@ export function BidForm({ eventId, userId, onSuccess }: BidFormProps) {
     setIsSubmitting(true)
 
     try {
-      const supabase = createBrowserClient()
+      // Check if Supabase client is initialized
+      if (!supabase) {
+        setError('Database connection not initialized. Please refresh the page.')
+        setIsSubmitting(false)
+        return
+      }
 
       // Convert price to cents
       const priceCents = Math.round(priceNum * 100)
 
-      // Call RPC function
+      // Call RPC function (uses authenticated client with Clerk JWT)
       const result = await createBid(supabase, eventId, priceCents, qtyNum, userId)
 
       if (result.error) {

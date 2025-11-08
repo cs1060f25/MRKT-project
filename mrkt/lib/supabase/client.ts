@@ -1,19 +1,33 @@
 /**
  * Supabase Client for Browser/Client Components
  *
- * This client is used in client components and should be called within
- * React components that run in the browser.
+ * ⚠️ WARNING: DO NOT USE THIS DIRECTLY IN COMPONENTS!
  *
- * Features:
- * - RLS-aware (uses authenticated user's JWT token)
- * - Automatic token refresh
- * - Type-safe database access
+ * This function creates a NEW Supabase client WITHOUT authentication.
+ * Using it directly will cause "Authentication required" errors.
  *
- * Usage:
- *   import { createBrowserClient } from '@/lib/supabase/client'
+ * ✅ CORRECT USAGE - Use the authenticated client from SupabaseProvider:
+ * ```typescript
+ * import { useSupabase } from '@/providers/supabase-provider'
  *
- *   const supabase = createBrowserClient()
+ * function MyComponent() {
+ *   const supabase = useSupabase()  // ✅ Authenticated with Clerk JWT
  *   const { data } = await supabase.from('events').select('*')
+ * }
+ * ```
+ *
+ * ❌ INCORRECT USAGE - Do NOT create new clients:
+ * ```typescript
+ * import { createBrowserClient } from '@/lib/supabase/client'
+ *
+ * function MyComponent() {
+ *   const supabase = createBrowserClient()  // ❌ No auth session!
+ *   // This will fail with "Authentication required"
+ * }
+ * ```
+ *
+ * This function should ONLY be used by SupabaseProvider to create
+ * the authenticated client instance that gets shared across the app.
  */
 
 import { createBrowserClient as createClient } from '@supabase/ssr'
