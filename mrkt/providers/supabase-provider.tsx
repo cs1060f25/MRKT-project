@@ -19,60 +19,101 @@
  * Usage in components:
  *   import { useSupabase } from '@/providers/supabase-provider'
  *
- *   const supabase = useSupabase()
+ *   const { supabase } = useSupabase()
  *   const { data } = await supabase.from('events').select('*')
  */
 
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { useAuth } from '@clerk/nextjs'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 type SupabaseContext = {
   supabase: SupabaseClient | null
+  isReady: boolean
+  supabaseUserId: string | null
+  refreshSession: () => Promise<string | null>
 }
 
 const Context = createContext<SupabaseContext | undefined>(undefined)
 
 export function SupabaseProvider({ children }: { children: React.ReactNode }) {
-  const { getToken, userId } = useAuth()
-  const [supabase, setSupabase] = useState<SupabaseClient | null>(null)
+  const { getToken, userId, isLoaded } = useAuth()
+  const clientRef = useRef<SupabaseClient | null>(null)
+  const isMountedRef = useRef(true)
 
   useEffect(() => {
-    // Create Supabase client
-    const client = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
 
-    setSupabase(client)
-
-    // Sync Clerk session with Supabase
-    const syncSession = async () => {
-      if (userId) {
-        // Get Clerk JWT token with Supabase claims
-        const token = await getToken({ template: 'supabase' })
-
-        if (token) {
-          // Set the Supabase session using Clerk's JWT
-          await client.auth.setSession({
-            access_token: token,
-            refresh_token: '', // Clerk manages refresh
-          })
+  const getClient = useCallback(() => {
+    if (!clientRef.current) {
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
+      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      console.log('[SupabaseProvider] Creating client with URL:', url)
+      
+      // For Clerk third-party auth, create client WITHOUT trying to manage sessions
+      // The JWT will be passed via Authorization header on each request
+      clientRef.current = createBrowserClient(url, key, {
+        auth: {
+          persistSession: false, // Don't try to persist Clerk sessions
+          autoRefreshToken: false, // Clerk handles token refresh
         }
-      } else {
-        // User signed out, clear Supabase session
-        await client.auth.signOut()
+      })
+    }
+    return clientRef.current
+  }, [])
+
+  const [supabase, setSupabase] = useState<SupabaseClient | null>(null)
+  const [isReady, setIsReady] = useState(false)
+  const [supabaseUserId, setSupabaseUserId] = useState<string | null>(null)
+
+  const syncSession = useCallback(async (options?: { skipReadyState?: boolean }) => {
+    const client = getClient()
+
+    if (!options?.skipReadyState && isMountedRef.current) {
+      setIsReady(false)
+    }
+
+    // For the workaround, we don't try to auth with Supabase directly
+    // Authentication is handled via API routes that verify Clerk sessions
+    // and use the service role key
+    console.log('[SupabaseProvider] Using Clerk auth workaround - Supabase client ready for public queries')
+
+    if (isMountedRef.current) {
+      setSupabase(client)
+      setSupabaseUserId(userId) // Store Clerk user ID for reference
+      if (!options?.skipReadyState) {
+        setIsReady(true)
       }
     }
 
+    return userId
+  }, [getClient, userId])
+
+  useEffect(() => {
+    if (!isLoaded) {
+      if (isMountedRef.current) {
+        setSupabase(null)
+        setSupabaseUserId(null)
+        setIsReady(false)
+      }
+      return
+    }
+
     syncSession()
-  }, [getToken, userId])
+  }, [isLoaded, syncSession])
+
+  const refreshSession = useCallback(async () => {
+    return syncSession({ skipReadyState: true })
+  }, [syncSession])
 
   return (
-    <Context.Provider value={{ supabase }}>
+    <Context.Provider value={{ supabase, isReady, supabaseUserId, refreshSession }}>
       {children}
     </Context.Provider>
   )
@@ -85,5 +126,5 @@ export function useSupabase() {
     throw new Error('useSupabase must be used inside SupabaseProvider')
   }
 
-  return context.supabase
+  return context
 }

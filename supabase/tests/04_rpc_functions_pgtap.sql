@@ -89,7 +89,8 @@ prepare create_ask_null_event as
     NULL,
     1000,
     1,
-    'test.png'
+    'test.png',
+    '11111111-1111-1111-1111-111111111111'
   );
 select throws_matching(
   'create_ask_null_event',
@@ -103,7 +104,8 @@ prepare create_ask_null_price as
     '33333333-3333-3333-3333-333333333333'::uuid,
     NULL,
     1,
-    'test.png'
+    'test.png',
+    '11111111-1111-1111-1111-111111111111'
   );
 select throws_matching(
   'create_ask_null_price',
@@ -117,7 +119,8 @@ prepare create_ask_zero_price as
     '33333333-3333-3333-3333-333333333333'::uuid,
     0,
     1,
-    'test.png'
+    'test.png',
+    '11111111-1111-1111-1111-111111111111'
   );
 select throws_matching(
   'create_ask_zero_price',
@@ -131,7 +134,8 @@ prepare create_ask_negative_price as
     '33333333-3333-3333-3333-333333333333'::uuid,
     -100,
     1,
-    'test.png'
+    'test.png',
+    '11111111-1111-1111-1111-111111111111'
   );
 select throws_matching(
   'create_ask_negative_price',
@@ -145,7 +149,8 @@ prepare create_ask_null_qty as
     '33333333-3333-3333-3333-333333333333'::uuid,
     1000,
     NULL,
-    'test.png'
+    'test.png',
+    '11111111-1111-1111-1111-111111111111'
   );
 select throws_matching(
   'create_ask_null_qty',
@@ -159,7 +164,8 @@ prepare create_ask_zero_qty as
     '33333333-3333-3333-3333-333333333333'::uuid,
     1000,
     0,
-    'test.png'
+    'test.png',
+    '11111111-1111-1111-1111-111111111111'
   );
 select throws_matching(
   'create_ask_zero_qty',
@@ -173,7 +179,8 @@ prepare create_ask_null_path as
     '33333333-3333-3333-3333-333333333333'::uuid,
     1000,
     1,
-    NULL
+    NULL,
+    '11111111-1111-1111-1111-111111111111'
   );
 select throws_matching(
   'create_ask_null_path',
@@ -193,7 +200,8 @@ prepare create_bid_null_event as
   select public.rpc_create_bid(
     NULL,
     1000,
-    1
+    1,
+    '22222222-2222-2222-2222-222222222222'
   );
 select throws_matching(
   'create_bid_null_event',
@@ -206,7 +214,8 @@ prepare create_bid_null_price as
   select public.rpc_create_bid(
     '33333333-3333-3333-3333-333333333333'::uuid,
     NULL,
-    1
+    1,
+    '22222222-2222-2222-2222-222222222222'
   );
 select throws_matching(
   'create_bid_null_price',
@@ -219,7 +228,8 @@ prepare create_bid_zero_price as
   select public.rpc_create_bid(
     '33333333-3333-3333-3333-333333333333'::uuid,
     0,
-    1
+    1,
+    '22222222-2222-2222-2222-222222222222'
   );
 select throws_matching(
   'create_bid_zero_price',
@@ -232,7 +242,8 @@ prepare create_bid_negative_price as
   select public.rpc_create_bid(
     '33333333-3333-3333-3333-333333333333'::uuid,
     -100,
-    1
+    1,
+    '22222222-2222-2222-2222-222222222222'
   );
 select throws_matching(
   'create_bid_negative_price',
@@ -245,7 +256,8 @@ prepare create_bid_null_qty as
   select public.rpc_create_bid(
     '33333333-3333-3333-3333-333333333333'::uuid,
     1000,
-    NULL
+    NULL,
+    '22222222-2222-2222-2222-222222222222'
   );
 select throws_matching(
   'create_bid_null_qty',
@@ -258,7 +270,8 @@ prepare create_bid_zero_qty as
   select public.rpc_create_bid(
     '33333333-3333-3333-3333-333333333333'::uuid,
     1000,
-    0
+    0,
+    '22222222-2222-2222-2222-222222222222'
   );
 select throws_matching(
   'create_bid_zero_qty',
@@ -373,7 +386,8 @@ select ok(
     '33333333-3333-3333-3333-333333333333'::uuid,
     9999,
     5,
-    'rowcount_test.png'
+    'rowcount_test.png',
+    '11111111-1111-1111-1111-111111111111'
   )) IS NOT NULL,
   'rpc_create_ask should create new row'
 );
@@ -391,7 +405,8 @@ select ok(
   (select public.rpc_create_bid(
     '33333333-3333-3333-3333-333333333333'::uuid,
     8888,
-    3
+    3,
+    '22222222-2222-2222-2222-222222222222'
   )) IS NOT NULL,
   'rpc_create_bid should create new row'
 );

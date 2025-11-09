@@ -1,0 +1,152 @@
+﻿Title,Description,Priority,Status,Assignee,Created,Completed,Labels,Estimate
+(1) DBCore - Postgres schema & RLS,"Goal: Create core Postgres schema with RLS for users, events, bids, asks, matches, tickets. Includes initial migrations.
+Hours: ~16h
+Blocked by: none
+Blocks: (1) I_DB - PostgREST/RPC, (2) Storage - Buckets & Policies, (3) Buyer UI - Bid Form, (2) Seller UI - Listing Flow, (4) Auction Engine - Matcher, (5) Delivery - Email
+Notes: Foundation for all data access.",High,Backlog,sparikh@mba2026.hbs.edu,2025-10-26,,MVP,5
+(1) I_DB - PostgREST & RPC surface,"Goal: Expose CRUD via PostgREST/RPC with row-level security constraints; version endpoints.
+Hours: ~8h
+Blocked by: (1) DBCore - Postgres schema & RLS
+Blocks: (3) Buyer UI - Bid Form, (2) Seller UI - Listing Flow, (4) Auction Engine - Matcher, (5) Delivery - Email
+Notes: Include SQL functions for bids/asks.",High,Backlog,sparikh@mba2026.hbs.edu,2025-10-26,,"MVP,Interface",3
+(1) I_ServiceKey - Service-role RPC (server->DB),"Goal: Configure Supabase service-role access for Edge Functions.
+Hours: ~2h
+Blocked by: (1) DBCore - Postgres schema & RLS
+Blocks: (4) Auction Engine - Matcher, (5) Delivery - Email",High,Backlog,sparikh@mba2026.hbs.edu,2025-10-26,,"MVP,Interface",1
+(1) Web App Shell - Next.js app (Vercel),"Goal: Initialize Next.js 14 (App Router, TS), Tailwind, env wiring, basic layout, health route.
+Hours: ~8h
+Blocked by: none
+Blocks: (1) I_SupaClient - Supabase Client, (1) I_Clerk - Auth SDK, (3) Buyer UI - Bid Form, (2) Seller UI - Listing Flow
+Notes: Prepared for Vercel deploy.",High,Backlog,jlinsdell@mba2026.hbs.edu,2025-10-26,,MVP,3
+(1) I_SupaClient - Supabase Client SDK,"Goal: Add Supabase client provider (RLS-aware) to app shell; SSR-safe helpers.
+Hours: ~3h
+Blocked by: (1) Web App Shell - Next.js app (Vercel)
+Blocks: (3) Buyer UI - Bid Form, (2) Seller UI - Listing Flow",High,Backlog,jlinsdell@mba2026.hbs.edu,2025-10-26,,"MVP,Interface",1
+(1) I_Clerk - Auth SDK integration,"Goal: Integrate Clerk (HBS allowlist), session provider, sign-in/up flows.
+Hours: ~5h
+Blocked by: (1) Web App Shell - Next.js app (Vercel)
+Blocks: (1) I_JWT - JWT plumbing, (3) Buyer UI - Bid Form, (2) Seller UI - Listing Flow",High,Backlog,jlinsdell@mba2026.hbs.edu,2025-10-26,,"MVP,Interface",2
+(1) I_JWT - JWT/Session pass-through,"Goal: Ensure Clerk JWT is passed to Supabase for RLS; edge-friendly verification.
+Hours: ~1-2h
+Blocked by: (1) I_Clerk - Auth SDK integration
+Blocks: (3) Buyer UI - Bid Form, (2) Seller UI - Listing Flow",High,Backlog,jlinsdell@mba2026.hbs.edu,2025-10-26,,"MVP,Interface",1
+(2) Storage - Buckets & policies,"Goal: Create Storage bucket for redacted QR; signed URL access; security policies.
+Hours: ~4-5h
+Blocked by: (1) DBCore - Postgres schema & RLS
+Blocks: (2) Seller UI - Listing Flow, (5) Delivery - Email",High,Backlog,sparikh@mba2026.hbs.edu,2025-10-26,,MVP,2
+(2) Seller UI - Listing Flow + QR upload,"Goal: Minimal seller flow to create listing with floor price; upload redacted QR.
+Hours: ~12h
+Blocked by: (1) Web App Shell - Next.js app (Vercel), (1) I_SupaClient - Supabase Client SDK, (1) I_DB - PostgREST & RPC, (2) Storage - Buckets & policies, (1) I_Clerk - Auth SDK integration
+Blocks: (4) Auction Engine - Matcher",High,Backlog,sparikh@mba2026.hbs.edu,2025-10-26,,MVP,4
+(3) Buyer UI - Bid Form (minimal),"Goal: Allow authenticated buyer to place/update bids on a listing; basic validation.
+Hours: ~8h
+Blocked by: (1) Web App Shell - Next.js app (Vercel), (1) I_SupaClient - Supabase Client SDK, (1) I_DB - PostgREST & RPC, (1) I_Clerk - Auth SDK integration
+Blocks: (4) Auction Engine - Matcher",High,Backlog,jlinsdell@mba2026.hbs.edu,2025-10-26,,MVP,3
+(4) I_Cron - Supabase Scheduler,"Goal: Configure CRON (hourly or manual trigger) to invoke auction function.
+Hours: ~2h
+Blocked by: none
+Blocks: (4) Auction Engine - Matcher",Medium,Backlog,sparikh@mba2026.hbs.edu,2025-10-26,,"MVP,Interface",1
+(4) Auction Engine - Matcher & clearing,"Goal: Implement minimal matching engine to compute clearing price; persist matches/reservations.
+Hours: ~16h
+Blocked by: (1) DBCore - Postgres schema & RLS, (1) I_DB - PostgREST & RPC, (1) I_ServiceKey - Service-role RPC, (4) I_Cron - Supabase Scheduler
+Blocks: (5) Delivery - Email",High,Backlog,sparikh@mba2026.hbs.edu,2025-10-26,,MVP,5
+(5) I_Notify - Notifications API (Resend),"Goal: Add Resend client and server helper for sending emails.
+Hours: ~2h
+Blocked by: none
+Blocks: (5) Delivery - Email",Medium,Backlog,jlinsdell@mba2026.hbs.edu,2025-10-26,,"MVP,Interface",1
+(5) I_Email - Email templates/API,"Goal: Define transactional templates: ticket delivery and instructions.
+Hours: ~2-3h
+Blocked by: (5) I_Notify - Notifications API (Resend)
+Blocks: (5) Delivery - Email",Medium,Backlog,jlinsdell@mba2026.hbs.edu,2025-10-26,,"MVP,Interface",1
+(5) Delivery - Ticket email with signed link,"Goal: Edge function reads matches, generates signed URL to QR, emails winner.
+Hours: ~8-10h
+Blocked by: (1) DBCore - Postgres schema & RLS, (1) I_DB - PostgREST & RPC, (1) I_ServiceKey - Service-role RPC, (5) I_Notify - Notifications API (Resend), (5) I_Email - Email templates/API
+Blocks: none",High,Backlog,jlinsdell@mba2026.hbs.edu,2025-10-26,,MVP,3
+(6) Analytics Aggregator - materialized views (later),"Goal: Build demand curves and basic views (later phase).
+Hours: ~6h
+Blocked by: (1) DBCore - Postgres schema & RLS
+Blocks: (6) AdminUI - Analytics Views",Low,Backlog,sparikh@mba2026.hbs.edu,2025-10-26,,"Later,Component",2
+(6) AdminUI - Analytics Views (later),"Goal: Read-only admin/club views for aggregated stats (later phase).
+Hours: ~6h
+Blocked by: (6) Analytics Aggregator - materialized views (later), (1) I_SupaClient - Supabase Client SDK
+Blocks: none",Low,Backlog,sparikh@mba2026.hbs.edu,2025-10-26,,"Later,Component",2
+(6) Charts - Event Feed and Curves (later),"Goal: Show basic price/liquidity curves from bids/asks (later phase).
+Hours: ~6h
+Blocked by: (1) I_DB - PostgREST & RPC, (1) I_SupaClient - Supabase Client SDK
+Blocks: none",Low,Backlog,jlinsdell@mba2026.hbs.edu,2025-10-26,,"Later,Component",2
+(7) Fraud Check - QR hash/dupe (later),"Goal: Edge function to hash QR uploads, detect duplicates (later phase).
+Hours: ~6h
+Blocked by: (2) Storage - Buckets & policies, (1) DBCore - Postgres schema & RLS
+Blocks: none",Low,Backlog,sparikh@mba2026.hbs.edu,2025-10-26,,"Later,Component",2
+(7) Scanners - External integration (later),"Goal: Optional venue scanner integration stub (later phase).
+Hours: ~2h
+Blocked by: none
+Blocks: (7) I_ScanAPI - Scanner Validation API (later)",Low,Backlog,jlinsdell@mba2026.hbs.edu,2025-10-26,,"Later,Component",1
+(7) I_ScanAPI - Scanner Validation API (later),"Goal: Define endpoint contract for optional scanner verification callback (later phase).
+Hours: ~2h
+Blocked by: (7) Scanners - External integration (later)
+Blocks: none",Low,Backlog,jlinsdell@mba2026.hbs.edu,2025-10-26,,"Later,Interface",1
+(1) DBCore - Subtask: Core tables and migrations,"Detail: Create tables (users, events, bids, asks, matches, tickets) and SQL migrations.
+Hours: ~6h
+Blocked by: none
+Blocks: (1) DBCore - Postgres schema & RLS",Medium,Backlog,sparikh@mba2026.hbs.edu,2025-10-26,,"MVP,Subtask",2
+(1) DBCore - Subtask: RLS policies,"Detail: Implement and test RLS for per-user and per-org access.
+Hours: ~6h
+Blocked by: (1) DBCore - Subtask: Core tables and migrations
+Blocks: (1) DBCore - Postgres schema & RLS",Medium,Backlog,sparikh@mba2026.hbs.edu,2025-10-26,,"MVP,Subtask",2
+(1) I_DB - Subtask: RPC functions,"Detail: Write SQL functions for safe bid/ask mutations; expose via PostgREST.
+Hours: ~4h
+Blocked by: (1) DBCore - Postgres schema & RLS
+Blocks: (1) I_DB - PostgREST & RPC",Medium,Backlog,sparikh@mba2026.hbs.edu,2025-10-26,,"MVP,Subtask,Interface",2
+(1) Web App Shell - Subtask: Next.js init,"Detail: Scaffold Next.js 14 app, TS, Tailwind, base routing, lint/test.
+Hours: ~3h
+Blocked by: none
+Blocks: (1) Web App Shell - Next.js app (Vercel)",Medium,Backlog,jlinsdell@mba2026.hbs.edu,2025-10-26,,"MVP,Subtask",1
+(1) Web App Shell - Subtask: Vercel env and CI,"Detail: Create Vercel project, env vars, preview deploys from main.
+Hours: ~3h
+Blocked by: (1) Web App Shell - Subtask: Next.js init
+Blocks: (1) Web App Shell - Next.js app (Vercel)",Medium,Backlog,jlinsdell@mba2026.hbs.edu,2025-10-26,,"MVP,Subtask",1
+(1) I_Clerk - Subtask: Provider and routes,"Detail: Add Clerk provider, sign-in/up routes, protected routes.
+Hours: ~3h
+Blocked by: (1) Web App Shell - Next.js app (Vercel)
+Blocks: (1) I_Clerk - Auth SDK integration",Medium,Backlog,jlinsdell@mba2026.hbs.edu,2025-10-26,,"MVP,Subtask,Interface",1
+(2) Storage - Subtask: Bucket and policies,"Detail: Create bucket, configure policies for read/write and signed URLs.
+Hours: ~3h
+Blocked by: (1) DBCore - Postgres schema & RLS
+Blocks: (2) Storage - Buckets & policies",Medium,Backlog,sparikh@mba2026.hbs.edu,2025-10-26,,"MVP,Subtask",1
+(2) Seller UI - Subtask: Listing create form,"Detail: Form with floor price, validation, RPC call.
+Hours: ~4h
+Blocked by: (1) Web App Shell - Next.js app (Vercel), (1) I_SupaClient - Supabase Client SDK, (1) I_DB - PostgREST & RPC
+Blocks: (2) Seller UI - Listing Flow + QR upload",Medium,Backlog,sparikh@mba2026.hbs.edu,2025-10-26,,"MVP,Subtask",2
+(2) Seller UI - Subtask: QR upload,"Detail: Upload redacted QR to Storage; signed link preview.
+Hours: ~4h
+Blocked by: (2) Storage - Subtask: Bucket and policies
+Blocks: (2) Seller UI - Listing Flow + QR upload",Medium,Backlog,sparikh@mba2026.hbs.edu,2025-10-26,,"MVP,Subtask",2
+(3) Buyer UI - Subtask: Bid form,"Detail: Place/update bid via RPC; handle RLS errors; minimal UX.
+Hours: ~4-5h
+Blocked by: (1) I_DB - PostgREST & RPC, (1) I_SupaClient - Supabase Client SDK, (1) I_Clerk - Auth SDK integration
+Blocks: (3) Buyer UI - Bid Form (minimal)",Medium,Backlog,jlinsdell@mba2026.hbs.edu,2025-10-26,,"MVP,Subtask",2
+(4) Auction - Subtask: Matching algorithm,"Detail: Greedy/price-time priority to compute clearing; unit tests.
+Hours: ~6-8h
+Blocked by: (1) DBCore - Postgres schema & RLS, (1) I_DB - PostgREST & RPC
+Blocks: (4) Auction Engine - Matcher & clearing",High,Backlog,sparikh@mba2026.hbs.edu,2025-10-26,,"MVP,Subtask",3
+(4) Auction - Subtask: Persist matches,"Detail: Write match results and reservations; idempotency guards.
+Hours: ~4-5h
+Blocked by: (4) Auction - Subtask: Matching algorithm
+Blocks: (4) Auction Engine - Matcher & clearing",High,Backlog,sparikh@mba2026.hbs.edu,2025-10-26,,"MVP,Subtask",2
+(4) Auction - Subtask: CRON wiring,"Detail: Configure scheduler to invoke auction function; manual trigger script.
+Hours: ~2h
+Blocked by: (4) I_Cron - Supabase Scheduler
+Blocks: (4) Auction Engine - Matcher & clearing",Medium,Backlog,sparikh@mba2026.hbs.edu,2025-10-26,,"MVP,Subtask",1
+(5) Delivery - Subtask: Email template,"Detail: Draft transactional template with variables; preview in dev.
+Hours: ~2h
+Blocked by: (5) I_Notify - Notifications API (Resend)
+Blocks: (5) Delivery - Ticket email with signed link",Medium,Backlog,jlinsdell@mba2026.hbs.edu,2025-10-26,,"MVP,Subtask",1
+(5) Delivery - Subtask: Signed URL,"Detail: Generate signed URL for QR; expiry and audit logging.
+Hours: ~3h
+Blocked by: (2) Storage - Buckets & policies, (1) I_ServiceKey - Service-role RPC
+Blocks: (5) Delivery - Ticket email with signed link",Medium,Backlog,jlinsdell@mba2026.hbs.edu,2025-10-26,,"MVP,Subtask",1
+(5) Delivery - Subtask: Send email job,"Detail: Edge function to compose payload and send via Resend; retry strategy.
+Hours: ~3h
+Blocked by: (5) Delivery - Subtask: Email template, (5) Delivery - Subtask: Signed URL, (1) I_DB - PostgREST & RPC
+Blocks: (5) Delivery - Ticket email with signed link",Medium,Backlog,jlinsdell@mba2026.hbs.edu,2025-10-26,,"MVP,Subtask",1

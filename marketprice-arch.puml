@@ -1,0 +1,147 @@
+@startuml
+' Marketprice System Architecture — Component & Interface Diagram
+' Boxes = elements; small circles = interfaces; arrows = interactions
+' Owner is shown on elements/interfaces via stereotype and on links like [Owner: Name]
+
+skinparam componentStyle uml2
+skinparam wrapWidth 220
+skinparam maxMessageSize 220
+title Marketprice — End-to-End Architecture (Deploy on Vercel + Supabase)
+
+legend left
+  Elements = boxes
+  Interfaces = dots (lollipops/sockets)
+  Interactions = labeled arrows
+  Ownership:
+    • Elements/Interfaces → <<Owner: Jamie/Shivam>>
+    • Interactions (arrows) → [Owner: Jamie/Shivam]
+endlegend
+
+node "Vercel" as Vercel {
+  package "Frontend (Next.js App)" as Frontend {
+    component "Web App Shell\nNext.js 14 (App Router)\nSSR/ISR, RLS-aware data fetching\n<<Owner: Jamie>>" as WebApp
+    component "Buyer UI\n(bids, alerts, wallet/add card)\n<<Owner: Jamie>>" as BuyerUI
+    component "Seller UI\n(listing flow, floor slider, QR upload)\n<<Owner: Shivam>>" as SellerUI
+    component "Event Feed & Charts\n(liquidity meter, price curves)\n<<Owner: Jamie>>" as Charts
+    component "Club/Admin Dashboard\n(aggregated analytics)\n<<Owner: Shivam>>" as AdminUI
+
+    interface "Supabase Client SDK\nAuth context, RPC, Storage\n<<Owner: Jamie>>" as I_SupaClient
+    interface "Clerk Auth SDK\n(HBS domain allowlist, phone/email)\n<<Owner: Jamie>>" as I_Clerk
+    interface "Stripe.js Elements\n(SetupIntent for card-on-file)\n<<Owner: Shivam>>" as I_StripeJS
+    interface "Notifications API\n(Resend email)\n<<Owner: Jamie>>" as I_Notify
+  }
+
+  package "Vercel Functions (Edge/API)" as VercelFns {
+    component "Stripe Webhook Handler\n(PI/SetupIntent events → DB)\n<<Owner: Shivam>>" as StripeWebhook
+    interface "Webhook Endpoint\n/api/stripe/webhook\n<<Owner: Shivam>>" as I_StripeWebhook
+  }
+}
+
+node "Supabase" as SB {
+  package "Database & Storage" as DB {
+    component "Postgres + RLS\nTables: users, events, bids, asks,\nmatches, tickets, payouts, scans\nPolicies for org(HBS) & row owners\n<<Owner: Shivam>>" as DBCore
+    component "Supabase Storage\n(Redacted QR uploads, secure buckets)\n<<Owner: Shivam>>" as Storage
+    interface "PostgREST / RPC\n(read/write with RLS)\n<<Owner: Shivam>>" as I_DB
+  }
+
+  package "Edge Functions & Scheduler" as EdgeFx {
+    component "Auction Engine\nHourly matcher, surplus-optimized clearing,\nescrow accounting\n<<Owner: Shivam>>" as Auction
+    component "Fraud Check\nQR hash/dupe detection, format sanity\n<<Owner: Shivam>>" as Fraud
+    component "Ticket Delivery\nSigned links + fingerprint,\nWallet pass file generation (optional)\n<<Owner: Jamie>>" as Deliver
+    component "Analytics Aggregator\nPrivacy-safe demand curves, club exports\n<<Owner: Shivam>>" as Analytics
+    interface "Supabase Scheduler (CRON)\n<<Owner: Shivam>>" as I_Cron
+    interface "Service Role RPC\n(server-to-server)\n<<Owner: Shivam>>" as I_ServiceKey
+  }
+}
+
+package "External Services" as Ext {
+  component "Clerk\n(3P auth: email/phone; session/JWT)\n<<Owner: Jamie>>" as Clerk
+  interface "JWT / Session\n(Clerk-issued)\n<<Owner: Jamie>>" as I_JWT
+
+  component "Stripe\n(tokenization, charges, payouts)\n<<Owner: Shivam>>" as Stripe
+  interface "Stripe Webhooks\npayment_intent.*, charge.succeeded\n<<Owner: Shivam>>" as I_StripeWH
+
+  component "Resend\n(email notifications)\n<<Owner: Jamie>>" as Resend
+  interface "Email API\n/send\n<<Owner: Jamie>>" as I_Email
+
+  component "Event Platforms / Scanners\n(Eventbrite/venue scanning)\n<<Owner: Jamie>>" as Scanners
+  interface "Scanner Validation API\n(optional callback for verify)\n<<Owner: Jamie>>" as I_ScanAPI
+}
+
+' --- Frontend wiring (interfaces) ---
+WebApp --o I_SupaClient : consumes\n[Owner: Jamie]
+WebApp --o I_Clerk : consumes\n[Owner: Jamie]
+WebApp --o I_StripeJS : consumes\n[Owner: Shivam]
+WebApp --o I_Notify : consumes\n[Owner: Jamie]
+
+I_SupaClient -- I_DB : RPC/REST calls\n[Owner: Jamie]
+I_DB o-- DBCore : provided\n[Owner: Shivam]
+I_SupaClient -- Storage : file ops\n[Owner: Jamie]
+
+I_Clerk -- Clerk : auth flows\n[Owner: Jamie]
+Clerk -- I_JWT : issues tokens\n[Owner: Jamie]
+WebApp -- I_JWT : verifies on edge\n[Owner: Jamie]
+
+I_StripeWebhook -- StripeWebhook : POST events\n[Owner: Shivam]
+Stripe -- I_StripeWH : emits\n[Owner: Shivam]
+I_StripeWH -- I_StripeWebhook : delivers\n[Owner: Shivam]
+
+I_Notify -- Resend : send emails\n[Owner: Jamie]
+
+' --- Backend (edge functions) wiring ---
+I_Cron -- Auction : hourly trigger (CRON)\n[Owner: Shivam]
+Auction -- I_DB : read bids/asks; write matches\n[Owner: Shivam]
+Auction -- Stripe : create/confirm PIs for winners\n[Owner: Shivam]
+Auction -- Deliver : enqueue fulfillments\n[Owner: Shivam]
+
+Fraud -- Storage : scan QR uploads\n[Owner: Shivam]
+Fraud -- I_DB : flag suspicious tickets\n[Owner: Shivam]
+
+Deliver -- I_DB : read matches/tickets; write delivery state\n[Owner: Jamie]
+Deliver -- Resend : email ticket links + receipts\n[Owner: Jamie]
+Deliver -- Scanners : (optional) name-change / verifier\n[Owner: Jamie]
+
+Analytics -- I_DB : aggregate to materialized views\n[Owner: Shivam]
+AdminUI -- I_SupaClient : query analytics views\n[Owner: Shivam]
+
+' --- Key user interactions (happy paths) ---
+BuyerUI -[#blue]-> I_Clerk : Sign in/up (HBS email + phone)\n[Owner: Jamie]
+BuyerUI -[#blue]-> I_StripeJS : Add card (SetupIntent)\n[Owner: Shivam]
+BuyerUI -[#blue]-> I_SupaClient : Place/Update Bid\n[Owner: Jamie]
+
+SellerUI -[#green]-> I_SupaClient : Create Listing + Floor\n[Owner: Shivam]
+SellerUI -[#green]-> Storage : Upload redacted QR\n[Owner: Shivam]
+
+Auction -[#orange]-> I_DB : Match bids↔asks; persist clearing price\n[Owner: Shivam]
+Stripe -[#orange]-> I_StripeWebhook : Webhook → mark payments\n[Owner: Shivam]
+Deliver -[#orange]-> I_Email : Send QR + instructions\n[Owner: Jamie]
+
+Charts -[#purple]-> I_SupaClient : Price curves & liquidity meter\n[Owner: Jamie]
+AdminUI -[#purple]-> I_SupaClient : Club analytics export\n[Owner: Shivam]
+
+' --- Security/Compliance touchpoints ---
+WebApp -[#red]-> I_JWT : per-request auth (RLS context)\n[Owner: Jamie]
+DBCore -[#red]-> DBCore : RLS policies enforce tenant/user scoping\n[Owner: Shivam]
+Storage -[#red]-> Storage : signed URLs for QR access\n[Owner: Shivam]
+
+' --- Deployment notes ---
+note right of Vercel
+  Deploy: Vercel (Next.js + API routes)
+  Stripe webhook handled on Vercel (secret verified)
+  Client uses Supabase JS (RLS via Clerk JWT)
+end note
+
+note right of SB
+  Supabase: Postgres + Storage
+  Edge Functions: Auction, Fraud, Delivery, Analytics
+  Scheduler: cron for hourly auctions
+end note
+
+note right of Ext
+  Auth via Clerk (no custom SMS infra)
+  Payments via Stripe (card on file)
+  Email via Resend
+end note
+
+' Source (PRD): :contentReference[oaicite:0]{index=0}
+@enduml

@@ -1,5 +1,5 @@
 begin;
-select plan(104);
+select plan(103);
 
 -- ============================================================================
 -- TABLE EXISTENCE TESTS
@@ -30,7 +30,7 @@ select has_column('public', 'users', 'full_name', 'users should have full_name c
 select has_column('public', 'users', 'created_at', 'users should have created_at column');
 
 select col_not_null('public', 'users', 'id', 'users.id should be NOT NULL');
-select col_not_null('public', 'users', 'email', 'users.email should be NOT NULL');
+-- Email is now nullable (auto-user creation pattern)
 select col_not_null('public', 'users', 'created_at', 'users.created_at should be NOT NULL');
 
 select col_has_default('public', 'users', 'created_at', 'users.created_at should have default');
