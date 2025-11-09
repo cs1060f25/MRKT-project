@@ -2,27 +2,25 @@
  * Bid Form Component
  *
  * Form for placing a bid on an event.
- * Validates input, converts price to cents, and calls rpc_create_bid.
+ * Validates input, converts price to cents, and calls the create bid API.
  */
 
 'use client'
 
 import { useState } from 'react'
 import { validateBidForm } from '@/lib/buy/validation'
-import { createBid } from '@/lib/supabase/rpc'
 import { useSupabase } from '@/providers/supabase-provider'
 import { ErrorBanner } from '@/components/common/ErrorBanner'
 import { SuccessMessage } from '@/components/common/SuccessMessage'
 
 interface BidFormProps {
   eventId: string
-  userId: string
   onSuccess?: () => void
 }
 
-export function BidForm({ eventId, userId, onSuccess }: BidFormProps) {
+export function BidForm({ eventId, onSuccess }: BidFormProps) {
   // Get authenticated Supabase client from provider
-  const { supabase, isReady } = useSupabase()
+  const { supabase, isReady, supabaseUserId, refreshSession } = useSupabase()
 
   // Form state
   const [priceInDollars, setPriceInDollars] = useState('')
@@ -58,15 +56,41 @@ export function BidForm({ eventId, userId, onSuccess }: BidFormProps) {
     })
 
     if (!validation.success) {
-      // Collect validation errors
       const errors: Record<string, string> = {}
-      if (validation.error?.issues) {
-        validation.error.issues.forEach((issue) => {
-          const field = issue.path[0] as string
-          errors[field] = issue.message
+
+      const flatten = (validation.error as any)?.flatten?.()
+      const fieldErrors: Record<string, string[] | undefined> | undefined = flatten?.fieldErrors
+      if (fieldErrors) {
+        Object.entries(fieldErrors).forEach(([field, messages]) => {
+          if (messages && messages.length > 0) {
+            errors[field] = messages[0]
+          }
         })
       }
+
+      if (Object.keys(errors).length === 0) {
+        const zodIssues =
+          (Array.isArray((validation.error as any)?.errors)
+            ? (validation.error as any).errors
+            : Array.isArray((validation.error as any)?.issues)
+              ? (validation.error as any).issues
+              : []) as Array<{ path: (string | number)[]; message: string }>
+
+        zodIssues.forEach((issue) => {
+          const field = issue.path[0] as string
+          if (!errors[field]) {
+            errors[field] = issue.message
+          }
+        })
+      }
+
+      const aggregatedMessage = Object.values(errors).join(' ')
+      if (aggregatedMessage) {
+        setError(aggregatedMessage)
+      }
+
       setValidationErrors(errors)
+      setIsSubmitting(false)
       return
     }
 
@@ -74,9 +98,9 @@ export function BidForm({ eventId, userId, onSuccess }: BidFormProps) {
     setIsSubmitting(true)
 
     try {
-      // Check if Supabase client is initialized
-      if (!supabase) {
-        setError('Database connection not initialized. Please refresh the page.')
+      // Validate we have a user ID
+      if (!supabaseUserId) {
+        setError('User not authenticated. Please sign in.')
         setIsSubmitting(false)
         return
       }
@@ -84,11 +108,24 @@ export function BidForm({ eventId, userId, onSuccess }: BidFormProps) {
       // Convert price to cents
       const priceCents = Math.round(priceNum * 100)
 
-      // Call RPC function (uses authenticated client with Clerk JWT)
-      const result = await createBid(supabase, eventId, priceCents, qtyNum, userId)
+      // Call API route to create bid
+      const response = await fetch('/api/bids/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          eventId,
+          priceCents,
+          qty: qtyNum,
+          buyerId: supabaseUserId,
+        }),
+      })
 
-      if (result.error) {
-        setError(result.error)
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || 'Failed to create bid')
         setIsSubmitting(false)
         return
       }
