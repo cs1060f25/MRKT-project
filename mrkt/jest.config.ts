@@ -45,7 +45,7 @@ const config: Config = {
   ],
 
   // Coverage thresholds (optional - can be adjusted)
-  coverageThresholds: {
+  coverageThreshold: {
     global: {
       branches: 0,
       functions: 0,

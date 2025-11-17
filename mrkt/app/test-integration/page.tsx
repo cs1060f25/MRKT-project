@@ -5,7 +5,7 @@ import { useAuth, useUser } from '@clerk/nextjs'
 import { useEffect, useState } from 'react'
 
 export default function TestIntegrationPage() {
-  const supabase = useSupabase()
+  const { supabase } = useSupabase()
   const { userId, getToken } = useAuth()
   const { user } = useUser()
   const [jwtPayload, setJwtPayload] = useState<any>(null)

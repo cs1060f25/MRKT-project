@@ -86,13 +86,13 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
 
     if (isMountedRef.current) {
       setSupabase(client)
-      setSupabaseUserId(userId) // Store Clerk user ID for reference
+      setSupabaseUserId(userId ?? null) // Store Clerk user ID for reference
       if (!options?.skipReadyState) {
         setIsReady(true)
       }
     }
 
-    return userId
+    return userId ?? null
   }, [getClient, userId])
 
   useEffect(() => {

@@ -73,12 +73,10 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
     if (!validation.success) {
       // Collect validation errors
       const errors: Record<string, string> = {}
-      if (validation.error?.errors) {
-        validation.error.errors.forEach((err) => {
-          const field = err.path[0] as string
-          errors[field] = err.message
-        })
-      }
+      validation.error.issues.forEach((issue) => {
+        const field = issue.path[0] as string
+        errors[field] = issue.message
+      })
       setValidationErrors(errors)
       return
     }
