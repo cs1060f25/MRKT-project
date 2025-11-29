@@ -1,6 +1,6 @@
 import { createServerClient } from '@/lib/supabase/server'
 import { auth } from '@clerk/nextjs/server'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 
 export default async function TestEdgePage() {
   // Get auth state
@@ -9,6 +9,10 @@ export default async function TestEdgePage() {
   // Create Supabase client for server component
   const cookieStore = await cookies()
   const supabase = createServerClient(cookieStore)
+  const hdrs = await headers()
+  const protocol = hdrs.get('x-forwarded-proto') ?? 'http'
+  const host = hdrs.get('host') ?? 'localhost:3000'
+  const baseUrl = `${protocol}://${host}`
 
   // Test 1: Basic query (events table - public read)
   const { data: events, error: eventsError } = await supabase
@@ -23,6 +27,64 @@ export default async function TestEdgePage() {
 
   // Test 3: Check current session
   const { data: { session } } = await supabase.auth.getSession()
+
+  // Helper to call our API with the current user's cookies
+  async function postCreateBid(payload: unknown) {
+    const res = await fetch(`${baseUrl}/api/bids/create`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        // Pass through cookies so Clerk auth is available to the API route
+        cookie: cookieStore.toString(),
+      },
+      body: JSON.stringify(payload),
+      cache: 'no-store',
+    })
+    let body: any = null
+    try {
+      body = await res.json()
+    } catch {
+      body = null
+    }
+    return { status: res.status, body }
+  }
+
+  // Prepare a valid baseline payload using a known event
+  const knownEventId =
+    (events && events.length > 0 && events[0]?.id) ||
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+  const validBase = {
+    eventId: knownEventId,
+    priceCents: 5000,
+    qty: 1,
+    buyerId: userId || 'anonymous',
+  }
+
+  // Only run validation tests if signed in (API requires auth)
+  const invalidEventId = userId
+    ? await postCreateBid({ ...validBase, eventId: 'not-a-uuid' })
+    : null
+  const nonIntegerPrice = userId
+    ? await postCreateBid({ ...validBase, priceCents: 123.45 })
+    : null
+  const priceTooHigh = userId
+    ? await postCreateBid({ ...validBase, priceCents: 1_000_001 })
+    : null
+  const qtyZero = userId
+    ? await postCreateBid({ ...validBase, qty: 0 })
+    : null
+  const qtyTooHigh = userId
+    ? await postCreateBid({ ...validBase, qty: 101 })
+    : null
+  const buyerMismatch = userId
+    ? await postCreateBid({ ...validBase, buyerId: `${userId}-mismatch` })
+    : null
+  const eventNotFound = userId
+    ? await postCreateBid({
+        ...validBase,
+        eventId: '00000000-0000-0000-0000-000000000000',
+      })
+    : null
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -146,6 +208,61 @@ export default async function TestEdgePage() {
               </p>
             )}
           </TestResult>
+
+          {/* Test 4: Create Bid API - Validation Scenarios */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold">Test 4: Create Bid API Validations</h2>
+            {!userId ? (
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded text-sm">
+                Please sign in to run these API validation tests.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <TestResult
+                  title="Invalid eventId format"
+                  description='POST /api/bids/create with eventId="not-a-uuid"'
+                  success={!!invalidEventId && invalidEventId.status === 400}
+                  error={invalidEventId?.body?.error}
+                />
+                <TestResult
+                  title="Non-integer priceCents"
+                  description="POST /api/bids/create with priceCents=123.45"
+                  success={!!nonIntegerPrice && nonIntegerPrice.status === 400}
+                  error={nonIntegerPrice?.body?.error}
+                />
+                <TestResult
+                  title="Price exceeds maximum ($10,000)"
+                  description="POST /api/bids/create with priceCents=1_000_001"
+                  success={!!priceTooHigh && priceTooHigh.status === 400}
+                  error={priceTooHigh?.body?.error}
+                />
+                <TestResult
+                  title="Quantity must be positive integer"
+                  description="POST /api/bids/create with qty=0"
+                  success={!!qtyZero && qtyZero.status === 400}
+                  error={qtyZero?.body?.error}
+                />
+                <TestResult
+                  title="Quantity exceeds maximum (100)"
+                  description="POST /api/bids/create with qty=101"
+                  success={!!qtyTooHigh && qtyTooHigh.status === 400}
+                  error={qtyTooHigh?.body?.error}
+                />
+                <TestResult
+                  title="Buyer mismatch forbidden"
+                  description="POST /api/bids/create with buyerId != current user"
+                  success={!!buyerMismatch && buyerMismatch.status === 403}
+                  error={buyerMismatch?.body?.error}
+                />
+                <TestResult
+                  title="Event not found (valid UUID but missing)"
+                  description='POST /api/bids/create with eventId="00000000-0000-0000-0000-000000000000"'
+                  success={!!eventNotFound && eventNotFound.status === 404}
+                  error={eventNotFound?.body?.error}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Overall Status */}
