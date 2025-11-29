@@ -9,6 +9,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { getServiceClient } from '@/lib/supabase/server'
 
+// Input validation helpers
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const MAX_PRICE_CENTS = 1_000_000 // $10,000
+const MAX_QTY = 100
+
 export async function POST(request: NextRequest) {
   try {
     // 1. Verify Clerk session
@@ -25,23 +30,45 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { eventId, priceCents, qty, buyerId } = body
 
-    if (!eventId || typeof eventId !== 'string') {
+    if (!eventId || typeof eventId !== 'string' || !UUID_REGEX.test(eventId)) {
       return NextResponse.json(
-        { error: 'Invalid eventId' },
+        { error: 'Invalid eventId. Must be a UUID string.' },
         { status: 400 }
       )
     }
 
-    if (!priceCents || typeof priceCents !== 'number' || priceCents <= 0) {
+    if (
+      typeof priceCents !== 'number' ||
+      !Number.isFinite(priceCents) ||
+      !Number.isSafeInteger(priceCents) ||
+      priceCents <= 0
+    ) {
       return NextResponse.json(
-        { error: 'Invalid price. Must be a positive number.' },
+        { error: 'Invalid priceCents. Must be a positive integer (in cents).' },
+        { status: 400 }
+      )
+    }
+    if (priceCents > MAX_PRICE_CENTS) {
+      return NextResponse.json(
+        { error: 'Price exceeds maximum allowed ($10,000).' },
         { status: 400 }
       )
     }
 
-    if (!qty || typeof qty !== 'number' || qty <= 0) {
+    if (
+      typeof qty !== 'number' ||
+      !Number.isFinite(qty) ||
+      !Number.isSafeInteger(qty) ||
+      qty <= 0
+    ) {
       return NextResponse.json(
-        { error: 'Invalid quantity. Must be a positive number.' },
+        { error: 'Invalid quantity. Must be a positive integer.' },
+        { status: 400 }
+      )
+    }
+    if (qty > MAX_QTY) {
+      return NextResponse.json(
+        { error: 'Quantity exceeds maximum allowed (100 tickets).' },
         { status: 400 }
       )
     }
@@ -96,7 +123,7 @@ export async function POST(request: NextRequest) {
     // 6. Verify event exists
     const { data: event, error: eventError } = await supabase
       .from('events')
-      .select('id')
+      .select('id, ends_at')
       .eq('id', eventId)
       .single()
 
@@ -104,6 +131,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Event not found' },
         { status: 404 }
+      )
+    }
+    // Disallow bidding on events that have ended
+    if (event.ends_at && new Date(event.ends_at).getTime() <= Date.now()) {
+      return NextResponse.json(
+        { error: 'Bidding closed: event has already ended.' },
+        { status: 400 }
       )
     }
 
