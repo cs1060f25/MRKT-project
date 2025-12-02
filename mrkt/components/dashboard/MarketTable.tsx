@@ -19,10 +19,29 @@ interface MarketTableProps {
 export function MarketTable({ events, bookPreviews }: MarketTableProps) {
   if (events.length === 0) {
     return (
-      <EmptyState
-        title="No upcoming events yet"
-        description="Check back soon for new events."
-      />
+      <div className="space-y-6">
+        {/* Create Event Button */}
+        <div className="flex justify-end">
+          <Link
+            href="/events/create"
+            className="inline-flex items-center rounded-md bg-[var(--color-crimson)] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[var(--color-crimson-dark)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-crimson)]"
+          >
+            <svg
+              className="-ml-0.5 mr-1.5 h-5 w-5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
+            </svg>
+            Create Event
+          </Link>
+        </div>
+        <EmptyState
+          title="No upcoming events yet"
+          description="Create an event to get started or check back soon."
+        />
+      </div>
     )
   }
 
@@ -40,7 +59,27 @@ export function MarketTable({ events, bookPreviews }: MarketTableProps) {
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-200">
+    <div className="space-y-4">
+      {/* Create Event Button */}
+      <div className="flex justify-end">
+        <Link
+          href="/events/create"
+          className="inline-flex items-center rounded-md bg-[var(--color-crimson)] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[var(--color-crimson-dark)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-crimson)]"
+        >
+          <svg
+            className="-ml-0.5 mr-1.5 h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
+          </svg>
+          Create Event
+        </Link>
+      </div>
+
+      {/* Events Table */}
+      <div className="overflow-hidden rounded-lg border border-gray-200">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
@@ -103,6 +142,7 @@ export function MarketTable({ events, bookPreviews }: MarketTableProps) {
           })}
         </tbody>
       </table>
+      </div>
     </div>
   )
 }
