@@ -2,6 +2,17 @@ begin;
 select plan(37);
 
 -- ============================================================================
+-- SETUP: Create test users for RLS testing
+-- ============================================================================
+-- These users are referenced throughout the tests for auth context
+set local role postgres;
+insert into public.users (id, email, full_name, created_at) values
+  ('11111111-1111-1111-1111-111111111111', 'test-seller@example.com', 'Test Seller', now()),
+  ('22222222-2222-2222-2222-222222222222', 'test-buyer@example.com', 'Test Buyer', now()),
+  ('99999999-9999-9999-9999-999999999999', 'test-uninvolved@example.com', 'Test Uninvolved', now());
+reset role;
+
+-- ============================================================================
 -- TEST: RLS is enabled on all tables
 -- ============================================================================
 
