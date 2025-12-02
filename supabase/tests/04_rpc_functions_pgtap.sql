@@ -1,6 +1,15 @@
 begin;
 select plan(31);
 
+-- ============================================================================
+-- SETUP: Create test users for RPC testing
+-- ============================================================================
+set local role postgres;
+insert into public.users (id, email, full_name, created_at) values
+  ('11111111-1111-1111-1111-111111111111', 'test-seller@example.com', 'Test Seller', now()),
+  ('22222222-2222-2222-2222-222222222222', 'test-buyer@example.com', 'Test Buyer', now());
+reset role;
+
 -- Set up authenticated user context (seller)
 set local role authenticated;
 set local request.jwt.claims to '{"sub": "11111111-1111-1111-1111-111111111111"}';

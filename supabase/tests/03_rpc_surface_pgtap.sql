@@ -2,6 +2,15 @@ begin;
 select plan(18);
 
 -- ============================================================================
+-- SETUP: Create test users for RPC testing
+-- ============================================================================
+set local role postgres;
+insert into public.users (id, email, full_name, created_at) values
+  ('11111111-1111-1111-1111-111111111111', 'test-seller@example.com', 'Test Seller', now()),
+  ('22222222-2222-2222-2222-222222222222', 'test-buyer@example.com', 'Test Buyer', now());
+reset role;
+
+-- ============================================================================
 -- TEST: rpc_health
 -- ============================================================================
 
@@ -47,7 +56,7 @@ select ok(
 -- Verify created_by is set correctly
 select is(
   (select created_by from public.events where title = 'Test Event via RPC'),
-  '11111111-1111-1111-1111-111111111111'::uuid,
+  '11111111-1111-1111-1111-111111111111'::text,
   'rpc_create_event should set created_by to auth.uid()'
 );
 
@@ -83,7 +92,7 @@ select ok(
 -- Verify seller_id and status are set correctly
 select is(
   (select seller_id from public.asks where price_cents = 5000 and qr_storage_path = 'rpc_test_ask.png'),
-  '11111111-1111-1111-1111-111111111111'::uuid,
+  '11111111-1111-1111-1111-111111111111'::text,
   'rpc_create_ask should set seller_id to auth.uid()'
 );
 
@@ -125,7 +134,7 @@ select ok(
 -- Verify buyer_id and status are set correctly
 select is(
   (select buyer_id from public.bids where price_cents = 4500 and qty = 3),
-  '22222222-2222-2222-2222-222222222222'::uuid,
+  '22222222-2222-2222-2222-222222222222'::text,
   'rpc_create_bid should set buyer_id to auth.uid()'
 );
 
