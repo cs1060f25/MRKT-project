@@ -47,16 +47,21 @@ ALTER TABLE public.bids
   ADD CONSTRAINT bids_buyer_id_fkey 
   FOREIGN KEY (buyer_id) REFERENCES public.users(id);
 
-ALTER TABLE public.tickets 
-  ADD CONSTRAINT tickets_winner_id_fkey 
+ALTER TABLE public.tickets
+  ADD CONSTRAINT tickets_winner_id_fkey
   FOREIGN KEY (winner_id) REFERENCES public.users(id);
 
--- Step 6: Recreate RLS policies (adapted for TEXT IDs)
+-- Step 6: Grant necessary privileges
+GRANT UPDATE ON public.users TO authenticated;
+
+-- Step 7: Recreate RLS policies (adapted for TEXT IDs)
 CREATE POLICY users_select_own ON public.users
   FOR SELECT USING (id = auth.uid()::TEXT);
 
 CREATE POLICY users_update_own ON public.users
-  FOR UPDATE USING (id = auth.uid()::TEXT);
+  FOR UPDATE
+  USING (id = auth.uid()::TEXT)
+  WITH CHECK (id = auth.uid()::TEXT);
 
 CREATE POLICY events_select_all ON public.events
   FOR SELECT USING (true);
@@ -102,7 +107,7 @@ CREATE POLICY tickets_update_own ON public.tickets
     ) AND asks.seller_id = auth.uid()::TEXT
   ));
 
--- Step 7: Recreate storage policies for QR codes
+-- Step 8: Recreate storage policies for QR codes
 CREATE POLICY qr_codes_insert_seller
   ON storage.objects
   FOR INSERT
