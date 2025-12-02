@@ -11,6 +11,10 @@ on:
     paths:
       - 'supabase/**'
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   test:
     name: Run pgTAP Tests

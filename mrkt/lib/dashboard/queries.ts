@@ -25,8 +25,19 @@ export async function getUpcomingEvents(
 
     // If RLS blocks due to auth issues, fallback to service role
     // Events are public data - all authenticated users can view them
-    if (!data || (data.length === 0 && !error)) {
-      console.log('[Dashboard] No events from RLS client, trying service role')
+    // Fallback in these cases:
+    // 1. No data returned (null/undefined)
+    // 2. Empty array with no error (RLS might be silently blocking)
+    // 3. Explicit RLS error (PGRST301, 42501, etc.)
+    const shouldFallback = !data ||
+                          data.length === 0 ||
+                          (error && (error.code === 'PGRST301' || error.code === '42501'))
+
+    if (shouldFallback) {
+      console.log('[Dashboard] Using service role fallback for events', {
+        reason: !data ? 'no data' : data.length === 0 ? 'empty result' : 'RLS error',
+        originalError: error?.message
+      })
       const { getServiceClient } = await import('../supabase/server/serviceClient')
       const serviceSupabase = getServiceClient({ functionName: 'dashboard-events' })
       const result = await serviceSupabase
