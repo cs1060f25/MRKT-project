@@ -15,6 +15,7 @@ import { getEventDetails, getEventMatches } from '@/lib/events/queries'
 import { getOrderBook } from '@/lib/supabase/rpc'
 import { EventHeader } from '@/components/events/EventHeader'
 import { MatchHistory } from '@/components/events/MatchHistory'
+import { ExecuteMatchingButton } from '@/components/events/ExecuteMatchingButton'
 
 export default async function EventPage({
   params,
@@ -185,6 +186,7 @@ export default async function EventPage({
                 >
                   Place Bid
                 </a>
+                <ExecuteMatchingButton eventId={eventId} />
               </div>
             </div>
           </div>
