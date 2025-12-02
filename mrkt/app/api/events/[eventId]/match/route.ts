@@ -112,6 +112,7 @@ export async function POST(
         // If QR is missing, match still succeeds but ticket creation is deferred
         if (ask.qr_storage_path) {
           ticketsToCreate.push({
+            id: crypto.randomUUID(),
             match_id: matchId,
             winner_id: bid.buyer_id,
             qr_storage_path: ask.qr_storage_path,
