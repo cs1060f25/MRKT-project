@@ -126,6 +126,9 @@ export async function POST(
         bid.qty -= matchQty
         matchesCount++
 
+        // If ask is exhausted, move to next ask
+        if (ask.qty <= 0) break
+
         // Prepare Updates
         // We defer DB updates to ensure we track the final state of each Ask/Bid
         // But since we might match one Ask multiple times, or one Bid multiple times,
