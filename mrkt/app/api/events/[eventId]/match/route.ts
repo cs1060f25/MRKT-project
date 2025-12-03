@@ -116,6 +116,8 @@ export async function POST(
             match_id: matchId,
             winner_id: bid.buyer_id,
             qr_storage_path: ask.qr_storage_path,
+            // Auto-deliver: ticket is immediately available since QR was uploaded at listing time
+            delivered_at: new Date().toISOString(),
           })
         }
 
