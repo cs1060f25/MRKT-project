@@ -34,17 +34,19 @@ export default async function DashboardPage() {
   // ============================================================================
   // Authentication Check
   // ============================================================================
-  const { userId } = await auth()
+  const { userId, getToken } = await auth()
 
   if (!userId) {
     redirect('/sign-in')
   }
 
   // ============================================================================
-  // Create RLS-aware Supabase Client
+  // Create RLS-aware Supabase Client with Clerk JWT
   // ============================================================================
   const cookieStore = await cookies()
-  const supabase = createServerClient(cookieStore)
+  // Get Clerk JWT for Supabase RLS (auth.jwt()->>'sub')
+  const token = await getToken({ template: 'supabase' })
+  const supabase = createServerClient(cookieStore, token || undefined)
 
   // ============================================================================
   // Fetch Data (Parallel)

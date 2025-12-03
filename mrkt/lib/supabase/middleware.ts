@@ -25,7 +25,8 @@ import { type NextRequest, NextResponse } from 'next/server'
 
 export function createMiddlewareClient(
   request: NextRequest,
-  response: NextResponse
+  response: NextResponse,
+  token?: string
 ) {
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -47,6 +48,14 @@ export function createMiddlewareClient(
           )
         },
       },
+      // Inject Clerk JWT for RLS policies via auth.jwt()->>'sub'
+      global: token
+        ? {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        : undefined,
     }
   )
 }
