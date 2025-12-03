@@ -2,6 +2,7 @@
  * Error Banner Component
  *
  * Displays error messages with optional retry button.
+ * Premium dark theme styling.
  */
 
 'use client'
@@ -13,7 +14,7 @@ interface ErrorBannerProps {
 
 export function ErrorBanner({ message, onRetry }: ErrorBannerProps) {
   return (
-    <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+    <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4">
       <div className="flex items-start">
         <div className="flex-shrink-0">
           <svg
@@ -30,8 +31,8 @@ export function ErrorBanner({ message, onRetry }: ErrorBannerProps) {
           </svg>
         </div>
         <div className="ml-3 flex-1">
-          <h3 className="text-sm font-medium text-red-800">Error</h3>
-          <div className="mt-2 text-sm text-red-700">
+          <h3 className="text-sm font-medium text-red-400">Error</h3>
+          <div className="mt-1 text-sm text-red-300/80">
             <p>{message}</p>
           </div>
           {onRetry && (
@@ -39,7 +40,7 @@ export function ErrorBanner({ message, onRetry }: ErrorBannerProps) {
               <button
                 type="button"
                 onClick={onRetry}
-                className="rounded-md bg-red-50 px-3 py-2 text-sm font-semibold text-red-800 shadow-sm hover:bg-red-100"
+                className="rounded-lg bg-red-500/20 px-3 py-2 text-sm font-semibold text-red-400 hover:bg-red-500/30 transition-colors"
               >
                 Try again
               </button>

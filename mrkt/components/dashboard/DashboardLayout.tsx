@@ -1,7 +1,7 @@
 /**
  * Dashboard Layout Component
  *
- * Tab-based layout for dashboard sections.
+ * Tab-based layout for dashboard sections with premium dark theme.
  */
 
 'use client'
@@ -50,8 +50,8 @@ export function DashboardLayout({
   return (
     <div className="space-y-6">
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+      <div className="border-b border-white/10">
+        <nav className="-mb-px flex space-x-1 sm:space-x-2" aria-label="Tabs">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id
             return (
@@ -59,30 +59,36 @@ export function DashboardLayout({
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`
-                  whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm
+                  relative whitespace-nowrap py-4 px-4 sm:px-6 font-medium text-sm transition-all duration-200
                   ${
                     isActive
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'text-white'
+                      : 'text-white/50 hover:text-white/80'
                   }
                 `}
                 aria-current={isActive ? 'page' : undefined}
               >
-                {tab.name}
-                {tab.count > 0 && (
-                  <span
-                    className={`
-                      ml-3 py-0.5 px-2.5 rounded-full text-xs font-medium
-                      ${
-                        isActive
-                          ? 'bg-indigo-100 text-indigo-600'
-                          : 'bg-gray-100 text-gray-900'
-                      }
-                    `}
-                  >
-                    {tab.count}
-                  </span>
+                {/* Active indicator */}
+                {isActive && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-crimson)] rounded-t-full" />
                 )}
+                <span className="flex items-center gap-2">
+                  {tab.name}
+                  {tab.count > 0 && (
+                    <span
+                      className={`
+                        py-0.5 px-2 rounded-full text-xs font-medium transition-colors
+                        ${
+                          isActive
+                            ? 'bg-[var(--color-crimson)] text-white'
+                            : 'bg-white/10 text-white/60'
+                        }
+                      `}
+                    >
+                      {tab.count}
+                    </span>
+                  )}
+                </span>
               </button>
             )
           })}
@@ -90,7 +96,7 @@ export function DashboardLayout({
       </div>
 
       {/* Tab Content */}
-      <div>
+      <div className="animate-fade-in-up">
         {activeTab === 'market' && (
           <>
             {errors.events ? (

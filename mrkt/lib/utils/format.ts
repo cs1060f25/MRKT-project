@@ -82,19 +82,19 @@ export function formatStatus(status: string): string {
 }
 
 /**
- * Get status badge color classes
+ * Get status badge color classes (dark theme)
  * @param status - Status string
  * @returns Tailwind CSS classes for badge
  */
 export function getStatusColor(status: string): string {
   switch (status.toLowerCase()) {
     case 'open':
-      return 'bg-green-100 text-green-800'
+      return 'bg-green-500/20 text-green-400'
     case 'matched':
-      return 'bg-blue-100 text-blue-800'
+      return 'bg-blue-500/20 text-blue-400'
     case 'cancelled':
-      return 'bg-gray-100 text-gray-800'
+      return 'bg-white/10 text-white/50'
     default:
-      return 'bg-gray-100 text-gray-800'
+      return 'bg-white/10 text-white/50'
   }
 }

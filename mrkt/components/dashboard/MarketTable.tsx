@@ -2,6 +2,7 @@
  * Market Table Component
  *
  * Displays upcoming events with optional order book preview.
+ * Premium dark theme with glassmorphic styling.
  */
 
 'use client'
@@ -24,10 +25,10 @@ export function MarketTable({ events, bookPreviews }: MarketTableProps) {
         <div className="flex justify-end">
           <Link
             href="/events/create"
-            className="inline-flex items-center rounded-md bg-[var(--color-crimson)] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[var(--color-crimson-dark)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-crimson)]"
+            className="btn-primary inline-flex items-center rounded-lg bg-[var(--color-crimson)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--color-crimson)]/20 hover:bg-[var(--color-crimson-dark)] transition-all"
           >
             <svg
-              className="-ml-0.5 mr-1.5 h-5 w-5"
+              className="-ml-0.5 mr-2 h-5 w-5"
               viewBox="0 0 20 20"
               fill="currentColor"
               aria-hidden="true"
@@ -64,10 +65,10 @@ export function MarketTable({ events, bookPreviews }: MarketTableProps) {
       <div className="flex justify-end">
         <Link
           href="/events/create"
-          className="inline-flex items-center rounded-md bg-[var(--color-crimson)] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[var(--color-crimson-dark)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-crimson)]"
+          className="btn-primary inline-flex items-center rounded-lg bg-[var(--color-crimson)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--color-crimson)]/20 hover:bg-[var(--color-crimson-dark)] transition-all"
         >
           <svg
-            className="-ml-0.5 mr-1.5 h-5 w-5"
+            className="-ml-0.5 mr-2 h-5 w-5"
             viewBox="0 0 20 20"
             fill="currentColor"
             aria-hidden="true"
@@ -79,81 +80,91 @@ export function MarketTable({ events, bookPreviews }: MarketTableProps) {
       </div>
 
       {/* Events Table */}
-      <div className="overflow-hidden rounded-lg border border-gray-200">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Event
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Organization
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Start Time
-            </th>
-            {bookPreviews && (
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Book Preview
+      <div className="glass rounded-2xl border border-white/10 overflow-hidden">
+        <table className="min-w-full">
+          <thead>
+            <tr className="border-b border-white/10">
+              <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase tracking-wider">
+                Event
               </th>
-            )}
-            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Action
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-200 bg-white">
-          {events.map((event) => {
-            const prices = getBestPrices(event.id)
-            return (
-              <tr key={event.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{event.title}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500">{event.org}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500">{formatDateTime(event.starts_at)}</div>
-                </td>
-                {bookPreviews && (
+              <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase tracking-wider">
+                Organization
+              </th>
+              <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase tracking-wider">
+                Start Time
+              </th>
+              {bookPreviews && (
+                <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase tracking-wider">
+                  Book Preview
+                </th>
+              )}
+              <th scope="col" className="px-6 py-4 text-right text-xs font-medium text-white/50 uppercase tracking-wider">
+                Action
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {events.map((event) => {
+              const prices = getBestPrices(event.id)
+              return (
+                <tr key={event.id} className="hover:bg-white/5 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {prices ? (
-                      <div className="text-sm text-gray-500">
-                        {prices.bestAsk && <div>Ask: {formatPrice(prices.bestAsk)}</div>}
-                        {prices.bestBid && <div>Bid: {formatPrice(prices.bestBid)}</div>}
-                        {!prices.bestAsk && !prices.bestBid && <div className="text-gray-400">No orders</div>}
-                      </div>
-                    ) : (
-                      <div className="text-sm text-gray-400">-</div>
-                    )}
+                    <div className="text-sm font-medium text-white">{event.title}</div>
                   </td>
-                )}
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm space-x-3">
-                  <Link
-                    href={`/events/${event.id}`}
-                    className="text-indigo-600 hover:text-indigo-900 font-medium"
-                  >
-                    View Event
-                  </Link>
-                  <Link
-                    href={`/sell/create?eventId=${event.id}`}
-                    className="text-indigo-600 hover:text-indigo-900 font-medium"
-                  >
-                    Create Listing
-                  </Link>
-                  <Link
-                    href={`/buy/${event.id}`}
-                    className="text-indigo-600 hover:text-indigo-900 font-medium"
-                  >
-                    Place Bid
-                  </Link>
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-white/60">{event.org}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-white/60">{formatDateTime(event.starts_at)}</div>
+                  </td>
+                  {bookPreviews && (
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {prices ? (
+                        <div className="text-sm space-y-0.5">
+                          {prices.bestAsk && (
+                            <div className="text-white/60">
+                              Ask: <span className="text-[var(--color-gold)] font-medium">{formatPrice(prices.bestAsk)}</span>
+                            </div>
+                          )}
+                          {prices.bestBid && (
+                            <div className="text-white/60">
+                              Bid: <span className="text-[var(--color-gold)] font-medium">{formatPrice(prices.bestBid)}</span>
+                            </div>
+                          )}
+                          {!prices.bestAsk && !prices.bestBid && (
+                            <div className="text-white/40">No orders</div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-white/40">-</div>
+                      )}
+                    </td>
+                  )}
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm space-x-3">
+                    <Link
+                      href={`/events/${event.id}`}
+                      className="text-[var(--color-gold)] hover:text-[var(--color-gold)]/80 font-medium transition-colors"
+                    >
+                      View Event
+                    </Link>
+                    <Link
+                      href={`/sell/create?eventId=${event.id}`}
+                      className="text-[var(--color-gold)] hover:text-[var(--color-gold)]/80 font-medium transition-colors"
+                    >
+                      Create Listing
+                    </Link>
+                    <Link
+                      href={`/buy/${event.id}`}
+                      className="text-[var(--color-gold)] hover:text-[var(--color-gold)]/80 font-medium transition-colors"
+                    >
+                      Place Bid
+                    </Link>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   )
