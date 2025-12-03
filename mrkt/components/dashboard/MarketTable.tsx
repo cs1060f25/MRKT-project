@@ -129,7 +129,19 @@ export function MarketTable({ events, bookPreviews }: MarketTableProps) {
                     )}
                   </td>
                 )}
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm space-x-3">
+                  <Link
+                    href={`/events/${event.id}`}
+                    className="text-indigo-600 hover:text-indigo-900 font-medium"
+                  >
+                    View Event
+                  </Link>
+                  <Link
+                    href={`/sell/create?eventId=${event.id}`}
+                    className="text-indigo-600 hover:text-indigo-900 font-medium"
+                  >
+                    Create Listing
+                  </Link>
                   <Link
                     href={`/buy/${event.id}`}
                     className="text-indigo-600 hover:text-indigo-900 font-medium"
