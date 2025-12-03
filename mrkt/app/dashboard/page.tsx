@@ -14,7 +14,6 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createServerClient } from '@/lib/supabase/server'
-import { SignedIn, SignedOut, UserButton, SignInButton } from '@clerk/nextjs'
 import {
   getUpcomingEvents,
   getUserBids,
@@ -34,17 +33,19 @@ export default async function DashboardPage() {
   // ============================================================================
   // Authentication Check
   // ============================================================================
-  const { userId } = await auth()
+  const { userId, getToken } = await auth()
 
   if (!userId) {
     redirect('/sign-in')
   }
 
   // ============================================================================
-  // Create RLS-aware Supabase Client
+  // Create RLS-aware Supabase Client with Clerk JWT
   // ============================================================================
   const cookieStore = await cookies()
-  const supabase = createServerClient(cookieStore)
+  // Get Clerk JWT for Supabase RLS (auth.jwt()->>'sub')
+  const token = await getToken({ template: 'supabase' })
+  const supabase = createServerClient(cookieStore, token || undefined)
 
   // ============================================================================
   // Fetch Data (Parallel)
@@ -90,24 +91,7 @@ export default async function DashboardPage() {
   // Render Dashboard
   // ============================================================================
   return (
-    <div className="min-h-screen bg-gray-50 relative">
-      {/* Repositioned auth controls (top-right) */}
-      <div className="absolute right-4 top-4 z-50 flex items-center gap-3">
-        <SignedIn>
-          <UserButton afterSignOutUrl="/" />
-        </SignedIn>
-        <SignedOut>
-          <SignInButton mode="modal">
-            <button
-              type="button"
-              className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600/60"
-              aria-label="Log in"
-            >
-              Log in
-            </button>
-          </SignInButton>
-        </SignedOut>
-      </div>
+    <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">

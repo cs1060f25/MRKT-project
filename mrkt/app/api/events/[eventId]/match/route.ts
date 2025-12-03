@@ -112,9 +112,12 @@ export async function POST(
         // If QR is missing, match still succeeds but ticket creation is deferred
         if (ask.qr_storage_path) {
           ticketsToCreate.push({
+            id: crypto.randomUUID(),
             match_id: matchId,
             winner_id: bid.buyer_id,
             qr_storage_path: ask.qr_storage_path,
+            // Auto-deliver: ticket is immediately available since QR was uploaded at listing time
+            delivered_at: new Date().toISOString(),
           })
         }
 
@@ -122,6 +125,9 @@ export async function POST(
         ask.qty -= matchQty
         bid.qty -= matchQty
         matchesCount++
+
+        // If ask is exhausted, move to next ask
+        if (ask.qty <= 0) break
 
         // Prepare Updates
         // We defer DB updates to ensure we track the final state of each Ask/Bid
@@ -153,10 +159,14 @@ export async function POST(
       // Let's just track which IDs participated in matches.
       const participated = matchesToCreate.some(m => m.ask_id === ask.id)
       if (participated) {
-        askUpdates.set(ask.id, {
-          qty: ask.qty,
-          status: ask.qty === 0 ? 'matched' : 'open'
-        })
+        if (ask.qty === 0) {
+          // Fully matched - only update status, keep original qty as historical record
+          // (qty > 0 constraint prevents setting qty = 0)
+          askUpdates.set(ask.id, { status: 'matched' })
+        } else {
+          // Partially matched - update both qty and keep status open
+          askUpdates.set(ask.id, { qty: ask.qty, status: 'open' })
+        }
       }
     }
 
@@ -164,10 +174,14 @@ export async function POST(
     for (const bid of bids) {
       const participated = matchesToCreate.some(m => m.bid_id === bid.id)
       if (participated) {
-        bidUpdates.set(bid.id, {
-          qty: bid.qty,
-          status: bid.qty === 0 ? 'matched' : 'open'
-        })
+        if (bid.qty === 0) {
+          // Fully matched - only update status, keep original qty as historical record
+          // (qty > 0 constraint prevents setting qty = 0)
+          bidUpdates.set(bid.id, { status: 'matched' })
+        } else {
+          // Partially matched - update both qty and keep status open
+          bidUpdates.set(bid.id, { qty: bid.qty, status: 'open' })
+        }
       }
     }
 

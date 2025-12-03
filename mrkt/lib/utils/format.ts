@@ -19,6 +19,7 @@ export function formatPrice(cents: number): string {
 
 /**
  * Format date to short format
+ * Uses UTC timezone to prevent hydration mismatches between server and client
  * @param date - Date string or Date object
  * @returns Formatted date string (e.g., "Nov 6, 2025")
  */
@@ -28,13 +29,15 @@ export function formatDate(date: string | Date): string {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
+    timeZone: 'UTC',
   }).format(d)
 }
 
 /**
  * Format date and time
+ * Uses UTC timezone to prevent hydration mismatches between server and client
  * @param date - Date string or Date object
- * @returns Formatted date-time string (e.g., "Nov 6, 2025 3:30 PM")
+ * @returns Formatted date-time string (e.g., "Nov 6, 2025, 3:30 PM")
  */
 export function formatDateTime(date: string | Date): string {
   const d = typeof date === 'string' ? new Date(date) : date
@@ -45,6 +48,7 @@ export function formatDateTime(date: string | Date): string {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
+    timeZone: 'UTC',
   }).format(d)
 }
 

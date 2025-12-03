@@ -10,10 +10,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   // Create response
   const res = NextResponse.next();
 
-  // Create Supabase client for middleware
-  const supabase = createMiddlewareClient(req, res);
-
-  // If user is authenticated, sync Clerk JWT with Supabase session
+  // If user is authenticated, get Clerk JWT and pass to Supabase client
   if (userId) {
     try {
       // Get Clerk JWT with Supabase claims
@@ -23,26 +20,23 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
       console.log("[Middleware] Got Supabase JWT token:", token ? "yes" : "no");
 
       if (token) {
-        // Set Supabase session with Clerk JWT
-        const { data, error } = await supabase.auth.setSession({
-          access_token: token,
-          refresh_token: "", // Clerk manages refresh
-        });
-        console.log(
-          "[Middleware] Supabase session set:",
-          error ? `error: ${error.message}` : "success"
-        );
+        // Create Supabase client with JWT in Authorization header
+        // This makes auth.jwt()->>'sub' work in RLS policies
+        createMiddlewareClient(req, res, token);
+        console.log("[Middleware] Supabase client created with JWT");
       } else {
         console.warn(
           "[Middleware] No token received - JWT template 'supabase' might not exist"
         );
+        createMiddlewareClient(req, res);
       }
     } catch (error) {
-      console.error("Failed to sync Clerk JWT with Supabase:", error);
+      console.error("Failed to get Clerk JWT:", error);
+      createMiddlewareClient(req, res);
     }
   } else {
-    // User not authenticated, ensure Supabase session is cleared
-    await supabase.auth.signOut();
+    // User not authenticated
+    createMiddlewareClient(req, res);
   }
 
   return res;

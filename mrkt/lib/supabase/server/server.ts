@@ -33,8 +33,14 @@ import type { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension
  *
  * This client handles cookies in a read-only manner, suitable for
  * React Server Components which cannot modify cookies.
+ *
+ * @param cookieStore - The cookie store from next/headers
+ * @param token - Optional Clerk JWT to inject for RLS policies (auth.jwt()->>'sub')
  */
-export function createServerClient(cookieStore: ReadonlyRequestCookies) {
+export function createServerClient(
+  cookieStore: ReadonlyRequestCookies,
+  token?: string
+) {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -55,6 +61,14 @@ export function createServerClient(cookieStore: ReadonlyRequestCookies) {
           }
         },
       },
+      // Inject Clerk JWT for RLS policies via auth.jwt()->>'sub'
+      global: token
+        ? {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        : undefined,
     }
   )
 }
