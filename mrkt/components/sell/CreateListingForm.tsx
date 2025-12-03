@@ -178,7 +178,7 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
       <div>
         <label
           htmlFor="event"
-          className="block text-sm font-medium leading-6 text-gray-900"
+          className="block text-sm font-medium text-white mb-2"
         >
           Event
         </label>
@@ -187,22 +187,22 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
           name="event"
           value={eventId}
           onChange={(e) => setEventId(e.target.value)}
-          className="mt-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-[var(--color-crimson)] sm:text-sm sm:leading-6"
+          className="block w-full rounded-lg bg-white/5 border border-white/20 px-4 py-3 text-white focus:ring-2 focus:ring-[var(--color-crimson)] focus:border-transparent sm:text-sm"
           disabled={isSubmitting}
         >
-          <option value="">Select an event...</option>
+          <option value="" className="bg-[var(--color-charcoal)] text-white/50">Select an event...</option>
           {events.map((event) => {
             // Format date consistently to avoid hydration mismatch
             const dateStr = event.starts_at.split('T')[0] // Get YYYY-MM-DD
             return (
-              <option key={event.id} value={event.id}>
+              <option key={event.id} value={event.id} className="bg-[var(--color-charcoal)] text-white">
                 {event.title} - {event.org} ({dateStr})
               </option>
             )
           })}
         </select>
         {validationErrors.eventId && (
-          <p className="mt-2 text-sm text-red-600">{validationErrors.eventId}</p>
+          <p className="mt-2 text-sm text-red-400">{validationErrors.eventId}</p>
         )}
       </div>
 
@@ -210,13 +210,13 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
       <div>
         <label
           htmlFor="price"
-          className="block text-sm font-medium leading-6 text-gray-900"
+          className="block text-sm font-medium text-white mb-2"
         >
           Floor Price ($)
         </label>
-        <div className="relative mt-2 rounded-md shadow-sm">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <span className="text-gray-500 sm:text-sm">$</span>
+        <div className="relative rounded-lg">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+            <span className="text-white/40 sm:text-sm">$</span>
           </div>
           <input
             type="number"
@@ -228,18 +228,18 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
             placeholder="0.00"
             value={priceInDollars}
             onChange={(e) => setPriceInDollars(e.target.value)}
-            className="block w-full rounded-md border-0 py-1.5 pl-7 pr-12 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[var(--color-crimson)] sm:text-sm sm:leading-6"
+            className="block w-full rounded-lg bg-white/5 border border-white/20 py-3 pl-8 pr-14 text-white placeholder:text-white/40 focus:ring-2 focus:ring-[var(--color-crimson)] focus:border-transparent sm:text-sm"
             disabled={isSubmitting}
           />
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-            <span className="text-gray-500 sm:text-sm">USD</span>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+            <span className="text-white/40 sm:text-sm">USD</span>
           </div>
         </div>
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-sm text-white/50">
           Minimum price per ticket you're willing to accept
         </p>
         {validationErrors.priceInDollars && (
-          <p className="mt-2 text-sm text-red-600">{validationErrors.priceInDollars}</p>
+          <p className="mt-2 text-sm text-red-400">{validationErrors.priceInDollars}</p>
         )}
       </div>
 
@@ -247,7 +247,7 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
       <div>
         <label
           htmlFor="quantity"
-          className="block text-sm font-medium leading-6 text-gray-900"
+          className="block text-sm font-medium text-white mb-2"
         >
           Quantity
         </label>
@@ -260,14 +260,14 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
           placeholder="1"
           value={quantity}
           onChange={(e) => setQuantity(e.target.value)}
-          className="mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[var(--color-crimson)] sm:text-sm sm:leading-6"
+          className="block w-full rounded-lg bg-white/5 border border-white/20 px-4 py-3 text-white placeholder:text-white/40 focus:ring-2 focus:ring-[var(--color-crimson)] focus:border-transparent sm:text-sm"
           disabled={isSubmitting}
         />
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-sm text-white/50">
           Number of tickets you want to sell
         </p>
         {validationErrors.quantity && (
-          <p className="mt-2 text-sm text-red-600">{validationErrors.quantity}</p>
+          <p className="mt-2 text-sm text-red-400">{validationErrors.quantity}</p>
         )}
       </div>
 
@@ -281,11 +281,11 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
 
       {/* Upload Progress */}
       {isSubmitting && uploadProgress > 0 && (
-        <div className="rounded-md bg-blue-50 p-4">
+        <div className="rounded-xl border border-[var(--color-crimson)]/20 bg-[var(--color-crimson)]/10 p-4">
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <svg
-                className="h-5 w-5 text-blue-400 animate-spin"
+                className="h-5 w-5 text-[var(--color-crimson)] animate-spin"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -306,12 +306,12 @@ export function CreateListingForm({ events }: CreateListingFormProps) {
               </svg>
             </div>
             <div className="ml-3 flex-1">
-              <p className="text-sm font-medium text-blue-800">
+              <p className="text-sm font-medium text-white">
                 Uploading QR code... {uploadProgress}%
               </p>
-              <div className="mt-2 w-full bg-blue-200 rounded-full h-2">
+              <div className="mt-2 w-full bg-white/10 rounded-full h-2">
                 <div
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  className="bg-[var(--color-crimson)] h-2 rounded-full transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                 ></div>
               </div>

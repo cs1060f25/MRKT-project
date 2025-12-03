@@ -2,6 +2,7 @@
  * My Bids Table Component
  *
  * Displays user's bids with event information and status.
+ * Premium dark theme with glassmorphic styling.
  */
 
 'use client'
@@ -30,55 +31,55 @@ export function MyBidsTable({ bids }: MyBidsTableProps) {
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-200">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+    <div className="glass rounded-2xl border border-white/10 overflow-hidden">
+      <table className="min-w-full">
+        <thead>
+          <tr className="border-b border-white/10">
+            <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase tracking-wider">
               Event
             </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase tracking-wider">
               Price
             </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase tracking-wider">
               Quantity
             </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase tracking-wider">
               Status
             </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase tracking-wider">
               Created
             </th>
-            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="px-6 py-4 text-right text-xs font-medium text-white/50 uppercase tracking-wider">
               Action
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200 bg-white">
+        <tbody className="divide-y divide-white/5">
           {bids.map((bid) => (
-            <tr key={bid.id} className="hover:bg-gray-50">
+            <tr key={bid.id} className="hover:bg-white/5 transition-colors">
               <td className="px-6 py-4">
-                <div className="text-sm font-medium text-gray-900">{bid.event.title}</div>
-                <div className="text-sm text-gray-500">{formatDateTime(bid.event.starts_at)}</div>
+                <div className="text-sm font-medium text-white">{bid.event.title}</div>
+                <div className="text-sm text-white/50">{formatDateTime(bid.event.starts_at)}</div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-900">{formatPrice(bid.price_cents)}</div>
+                <div className="text-sm text-[var(--color-gold)] font-medium">{formatPrice(bid.price_cents)}</div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-900">{bid.qty}</div>
+                <div className="text-sm text-white">{bid.qty}</div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(bid.status)}`}>
+                <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusColor(bid.status)}`}>
                   {formatStatus(bid.status)}
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-500">{formatDateTime(bid.created_at)}</div>
+                <div className="text-sm text-white/50">{formatDateTime(bid.created_at)}</div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                 <Link
                   href={`/events/${bid.event_id}`}
-                  className="text-indigo-600 hover:text-indigo-900 font-medium"
+                  className="text-[var(--color-gold)] hover:text-[var(--color-gold)]/80 font-medium transition-colors"
                 >
                   View Event
                 </Link>

@@ -91,12 +91,13 @@ export default async function DashboardPage() {
   // Render Dashboard
   // ============================================================================
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--color-charcoal)]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <div className="elegant-divider mb-4" />
+          <h1 className="font-[var(--font-playfair)] text-4xl font-bold text-white">Dashboard</h1>
+          <p className="mt-2 text-sm text-white/60">
             View upcoming events, manage your bids and listings, and access your tickets.
           </p>
         </div>

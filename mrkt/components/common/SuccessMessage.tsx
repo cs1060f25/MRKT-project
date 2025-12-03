@@ -2,6 +2,7 @@
  * Success Message Component
  *
  * Displays success messages with optional action button.
+ * Premium dark theme styling.
  */
 
 'use client'
@@ -20,7 +21,7 @@ export function SuccessMessage({
   onAction,
 }: SuccessMessageProps) {
   return (
-    <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+    <div className="rounded-xl border border-green-500/20 bg-green-500/10 p-4">
       <div className="flex items-start">
         <div className="flex-shrink-0">
           <svg
@@ -37,8 +38,8 @@ export function SuccessMessage({
           </svg>
         </div>
         <div className="ml-3 flex-1">
-          <h3 className="text-sm font-medium text-green-800">{title}</h3>
-          <div className="mt-2 text-sm text-green-700">
+          <h3 className="text-sm font-medium text-green-400">{title}</h3>
+          <div className="mt-1 text-sm text-green-300/80">
             <p>{message}</p>
           </div>
           {actionLabel && onAction && (
@@ -46,7 +47,7 @@ export function SuccessMessage({
               <button
                 type="button"
                 onClick={onAction}
-                className="rounded-md bg-green-50 px-3 py-2 text-sm font-semibold text-green-800 shadow-sm hover:bg-green-100"
+                className="rounded-lg bg-green-500/20 px-3 py-2 text-sm font-semibold text-green-400 hover:bg-green-500/30 transition-colors"
               >
                 {actionLabel}
               </button>

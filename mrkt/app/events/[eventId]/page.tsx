@@ -3,6 +3,7 @@
  *
  * Public page displaying event information, current market activity (order book),
  * and executed transaction history (matches).
+ * Premium dark theme styling.
  *
  * Route: /events/[eventId]
  */
@@ -46,9 +47,9 @@ export default async function EventPage({
 
   if (eventResult.error) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-[var(--color-charcoal)]">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+          <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4">
             <div className="flex items-start">
               <div className="flex-shrink-0">
                 <svg
@@ -65,10 +66,10 @@ export default async function EventPage({
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">
+                <h3 className="text-sm font-medium text-red-400">
                   Failed to load event
                 </h3>
-                <div className="mt-2 text-sm text-red-700">
+                <div className="mt-2 text-sm text-red-300/80">
                   <p>{eventResult.error}</p>
                 </div>
               </div>
@@ -99,7 +100,7 @@ export default async function EventPage({
   // Render Page
   // ============================================================================
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--color-charcoal)]">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
         {/* Event Header */}
         <EventHeader event={event} />
@@ -107,14 +108,14 @@ export default async function EventPage({
         {/* Current Market Activity (Order Book) */}
         {!orderBookResult.error && orderBookResult.data.length > 0 && (
           <div className="mb-8">
-            <div className="rounded-lg border border-gray-200 bg-white p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            <div className="glass rounded-2xl border border-white/10 p-6">
+              <h2 className="text-lg font-semibold text-white mb-4">
                 Current Market Activity
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Asks (Sellers) */}
                 <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">
+                  <h3 className="text-sm font-medium text-white/70 mb-3">
                     Available Listings (Asks)
                   </h3>
                   <div className="space-y-2">
@@ -124,26 +125,26 @@ export default async function EventPage({
                       .map((entry, idx) => (
                         <div
                           key={idx}
-                          className="flex justify-between items-center py-2 px-3 rounded bg-red-50"
+                          className="flex justify-between items-center py-2 px-3 rounded-lg bg-red-500/10 border border-red-500/20"
                         >
-                          <span className="text-sm font-medium text-red-600">
+                          <span className="text-sm font-medium text-red-400">
                             ${(entry.price_cents / 100).toFixed(2)}
                           </span>
-                          <span className="text-sm text-gray-600">
+                          <span className="text-sm text-white/60">
                             {entry.qty} {entry.qty === 1 ? 'ticket' : 'tickets'}
                           </span>
                         </div>
                       ))}
                     {orderBookResult.data.filter((entry) => entry.book_side === 'ask')
                       .length === 0 && (
-                      <p className="text-sm text-gray-400 italic py-2">No active asks</p>
+                      <p className="text-sm text-white/40 italic py-2">No active asks</p>
                     )}
                   </div>
                 </div>
 
                 {/* Bids (Buyers) */}
                 <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">
+                  <h3 className="text-sm font-medium text-white/70 mb-3">
                     Active Bids (Buyers)
                   </h3>
                   <div className="space-y-2">
@@ -154,19 +155,19 @@ export default async function EventPage({
                       .map((entry, idx) => (
                         <div
                           key={idx}
-                          className="flex justify-between items-center py-2 px-3 rounded bg-green-50"
+                          className="flex justify-between items-center py-2 px-3 rounded-lg bg-green-500/10 border border-green-500/20"
                         >
-                          <span className="text-sm font-medium text-green-600">
+                          <span className="text-sm font-medium text-green-400">
                             ${(entry.price_cents / 100).toFixed(2)}
                           </span>
-                          <span className="text-sm text-gray-600">
+                          <span className="text-sm text-white/60">
                             {entry.qty} {entry.qty === 1 ? 'ticket' : 'tickets'}
                           </span>
                         </div>
                       ))}
                     {orderBookResult.data.filter((entry) => entry.book_side === 'bid')
                       .length === 0 && (
-                      <p className="text-sm text-gray-400 italic py-2">No active bids</p>
+                      <p className="text-sm text-white/40 italic py-2">No active bids</p>
                     )}
                   </div>
                 </div>
@@ -176,13 +177,13 @@ export default async function EventPage({
               <div className="mt-6 flex flex-wrap gap-3">
                 <a
                   href={`/sell/create?eventId=${eventId}`}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  className="inline-flex items-center px-4 py-2.5 text-sm font-semibold rounded-lg text-white bg-[var(--color-crimson)] hover:bg-[var(--color-crimson-dark)] transition-colors shadow-lg shadow-[var(--color-crimson)]/20"
                 >
                   Create Listing
                 </a>
                 <a
                   href={`/buy/${eventId}`}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                  className="inline-flex items-center px-4 py-2.5 text-sm font-semibold rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors"
                 >
                   Place Bid
                 </a>
@@ -194,13 +195,13 @@ export default async function EventPage({
 
         {orderBookResult.data.length === 0 && (
           <div className="mb-8">
-            <div className="rounded-lg border border-gray-200 bg-white p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            <div className="glass rounded-2xl border border-white/10 p-6">
+              <h2 className="text-lg font-semibold text-white mb-4">
                 Current Market Activity
               </h2>
               <div className="text-center py-8">
                 <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
+                  className="mx-auto h-12 w-12 text-white/30"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -213,20 +214,20 @@ export default async function EventPage({
                     d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
                   />
                 </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">No active market</h3>
-                <p className="mt-1 text-sm text-gray-500">
+                <h3 className="mt-2 text-sm font-medium text-white">No active market</h3>
+                <p className="mt-1 text-sm text-white/50">
                   Be the first to create a listing or place a bid.
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3 justify-center">
                   <a
                     href={`/sell/create?eventId=${eventId}`}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    className="inline-flex items-center px-4 py-2.5 text-sm font-semibold rounded-lg text-white bg-[var(--color-crimson)] hover:bg-[var(--color-crimson-dark)] transition-colors shadow-lg shadow-[var(--color-crimson)]/20"
                   >
                     Create Listing
                   </a>
                   <a
                     href={`/buy/${eventId}`}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                    className="inline-flex items-center px-4 py-2.5 text-sm font-semibold rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors"
                   >
                     Place Bid
                   </a>
@@ -238,7 +239,7 @@ export default async function EventPage({
 
         {/* Transaction History */}
         {matchesResult.error ? (
-          <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+          <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/10 p-4">
             <div className="flex items-start">
               <div className="flex-shrink-0">
                 <svg
@@ -255,10 +256,10 @@ export default async function EventPage({
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-yellow-800">
+                <h3 className="text-sm font-medium text-yellow-400">
                   Could not load transaction history
                 </h3>
-                <div className="mt-2 text-sm text-yellow-700">
+                <div className="mt-2 text-sm text-yellow-300/80">
                   <p>{matchesResult.error}</p>
                 </div>
               </div>
@@ -271,4 +272,3 @@ export default async function EventPage({
     </div>
   )
 }
-

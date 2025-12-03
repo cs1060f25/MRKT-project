@@ -3,6 +3,7 @@
  *
  * Confirmation page shown after successfully creating a listing.
  * Provides options to view dashboard or create another listing.
+ * Premium dark theme styling.
  */
 
 import Link from 'next/link'
@@ -28,15 +29,15 @@ export default async function SellSuccessPage() {
   // Render Success Message
   // ============================================================================
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--color-charcoal)]">
       <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-8">
         {/* Success Card */}
-        <div className="mt-12 rounded-lg bg-white shadow-sm border border-gray-200 p-8">
+        <div className="mt-12 glass rounded-2xl border border-white/10 p-8">
           {/* Success Icon */}
           <div className="flex justify-center">
-            <div className="rounded-full bg-green-100 p-3">
+            <div className="rounded-full bg-green-500/20 p-4 border border-green-500/30">
               <svg
-                className="h-12 w-12 text-green-600"
+                className="h-12 w-12 text-green-400"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -54,10 +55,10 @@ export default async function SellSuccessPage() {
 
           {/* Success Message */}
           <div className="mt-6 text-center">
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="font-[var(--font-playfair)] text-2xl font-bold text-white">
               Listing Created Successfully!
             </h1>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-sm text-white/60">
               Your event ticket listing has been posted to the marketplace. Buyers can now see your listing and submit bids.
             </p>
           </div>
@@ -66,24 +67,24 @@ export default async function SellSuccessPage() {
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/dashboard"
-              className="inline-flex justify-center items-center rounded-md bg-[var(--color-crimson)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[var(--color-crimson-dark)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-crimson)]"
+              className="inline-flex justify-center items-center rounded-lg bg-[var(--color-crimson)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--color-crimson)]/20 hover:bg-[var(--color-crimson-dark)] transition-colors"
             >
               View Dashboard
             </Link>
             <Link
               href="/sell/create"
-              className="inline-flex justify-center items-center rounded-md bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+              className="inline-flex justify-center items-center rounded-lg bg-white/10 px-4 py-2.5 text-sm font-semibold text-white border border-white/20 hover:bg-white/20 transition-colors"
             >
               Create Another Listing
             </Link>
           </div>
 
           {/* Info Box */}
-          <div className="mt-8 rounded-lg bg-blue-50 p-4">
+          <div className="mt-8 rounded-xl border border-[var(--color-gold)]/20 bg-[var(--color-gold)]/10 p-4">
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg
-                  className="h-5 w-5 text-blue-400"
+                  className="h-5 w-5 text-[var(--color-gold)]"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                   aria-hidden="true"
@@ -96,10 +97,10 @@ export default async function SellSuccessPage() {
                 </svg>
               </div>
               <div className="ml-3 flex-1">
-                <h3 className="text-sm font-medium text-blue-800">
+                <h3 className="text-sm font-medium text-[var(--color-gold)]">
                   What happens next?
                 </h3>
-                <div className="mt-2 text-sm text-blue-700">
+                <div className="mt-2 text-sm text-white/60">
                   <ul className="list-disc pl-5 space-y-1">
                     <li>
                       Your listing is now visible to buyers on the marketplace

@@ -171,13 +171,13 @@ export function BidForm({ eventId, onSuccess }: BidFormProps) {
         <div>
           <label
             htmlFor="price"
-            className="block text-sm font-medium leading-6 text-gray-900"
+            className="block text-sm font-medium text-white mb-2"
           >
             Max Price ($)
           </label>
-          <div className="relative mt-2 rounded-md shadow-sm">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <span className="text-gray-500 sm:text-sm">$</span>
+          <div className="relative rounded-lg">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+              <span className="text-white/40 sm:text-sm">$</span>
             </div>
             <input
               type="number"
@@ -189,18 +189,18 @@ export function BidForm({ eventId, onSuccess }: BidFormProps) {
               placeholder="0.00"
               value={priceInDollars}
               onChange={(e) => setPriceInDollars(e.target.value)}
-              className="block w-full rounded-md border-0 py-1.5 pl-7 pr-12 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[var(--color-crimson)] sm:text-sm sm:leading-6"
+              className="block w-full rounded-lg bg-white/5 border border-white/20 py-3 pl-8 pr-14 text-white placeholder:text-white/40 focus:ring-2 focus:ring-[var(--color-crimson)] focus:border-transparent sm:text-sm"
               disabled={isSubmitting}
             />
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-              <span className="text-gray-500 sm:text-sm">USD</span>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+              <span className="text-white/40 sm:text-sm">USD</span>
             </div>
           </div>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-white/50">
             Maximum price per ticket you're willing to pay
           </p>
           {validationErrors.priceInDollars && (
-            <p className="mt-2 text-sm text-red-600">{validationErrors.priceInDollars}</p>
+            <p className="mt-2 text-sm text-red-400">{validationErrors.priceInDollars}</p>
           )}
         </div>
 
@@ -208,7 +208,7 @@ export function BidForm({ eventId, onSuccess }: BidFormProps) {
         <div>
           <label
             htmlFor="quantity"
-            className="block text-sm font-medium leading-6 text-gray-900"
+            className="block text-sm font-medium text-white mb-2"
           >
             Quantity
           </label>
@@ -221,14 +221,14 @@ export function BidForm({ eventId, onSuccess }: BidFormProps) {
             placeholder="1"
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
-            className="mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[var(--color-crimson)] sm:text-sm sm:leading-6"
+            className="block w-full rounded-lg bg-white/5 border border-white/20 px-4 py-3 text-white placeholder:text-white/40 focus:ring-2 focus:ring-[var(--color-crimson)] focus:border-transparent sm:text-sm"
             disabled={isSubmitting}
           />
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-white/50">
             Number of tickets you want to buy
           </p>
           {validationErrors.quantity && (
-            <p className="mt-2 text-sm text-red-600">{validationErrors.quantity}</p>
+            <p className="mt-2 text-sm text-red-400">{validationErrors.quantity}</p>
           )}
         </div>
 
@@ -242,7 +242,7 @@ export function BidForm({ eventId, onSuccess }: BidFormProps) {
             {!isReady ? 'Initializing...' : isSubmitting ? 'Placing Bid...' : 'Place Bid'}
           </button>
           {!isReady && (
-            <p className="mt-2 text-sm text-gray-500 text-center">
+            <p className="mt-2 text-sm text-white/50 text-center">
               Setting up authentication...
             </p>
           )}
