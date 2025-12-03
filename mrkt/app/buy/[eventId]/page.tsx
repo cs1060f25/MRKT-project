@@ -3,6 +3,7 @@
  *
  * Authenticated page for buyers to place bids on events.
  * Displays event details, order book preview, existing bids, and bid form.
+ * Premium dark theme styling.
  */
 
 import { auth } from '@clerk/nextjs/server'
@@ -43,9 +44,9 @@ export default async function BuyEventPage({
 
   if (eventResult.error) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-[var(--color-charcoal)]">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8">
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+          <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4">
             <div className="flex items-start">
               <div className="flex-shrink-0">
                 <svg
@@ -62,10 +63,10 @@ export default async function BuyEventPage({
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">
+                <h3 className="text-sm font-medium text-red-400">
                   Failed to load event
                 </h3>
-                <div className="mt-2 text-sm text-red-700">
+                <div className="mt-2 text-sm text-red-300/80">
                   <p>{eventResult.error}</p>
                 </div>
               </div>
@@ -105,20 +106,21 @@ export default async function BuyEventPage({
   })
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--color-charcoal)]">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8">
         {/* Header - Event Details */}
         <div className="mb-8">
-          <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-            <a href="/" className="hover:text-gray-700">Home</a>
-            <span>›</span>
-            <span>Place Bid</span>
+          <div className="flex items-center gap-2 text-sm text-white/50 mb-4">
+            <a href="/dashboard" className="hover:text-white transition-colors">Dashboard</a>
+            <span className="text-white/30">›</span>
+            <span className="text-white/70">Place Bid</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">{event.title}</h1>
-          <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600">
+          <div className="elegant-divider mb-4" />
+          <h1 className="font-[var(--font-playfair)] text-3xl font-bold text-white">{event.title}</h1>
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-white/60">
             <div className="flex items-center gap-2">
               <svg
-                className="h-5 w-5 text-gray-400"
+                className="h-5 w-5 text-white/40"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -130,11 +132,11 @@ export default async function BuyEventPage({
                   d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                 />
               </svg>
-              <span>{event.org}</span>
+              <span className="text-white">{event.org}</span>
             </div>
             <div className="flex items-center gap-2">
               <svg
-                className="h-5 w-5 text-gray-400"
+                className="h-5 w-5 text-white/40"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -154,14 +156,14 @@ export default async function BuyEventPage({
         {/* Order Book Preview */}
         {!orderBookResult.error && orderBookResult.data.length > 0 && (
           <div className="mb-8">
-            <div className="rounded-lg border border-gray-200 bg-white p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            <div className="glass rounded-2xl border border-white/10 p-6">
+              <h2 className="text-lg font-semibold text-white mb-4">
                 Market Overview
               </h2>
               <div className="grid grid-cols-2 gap-6">
                 {/* Asks (Sellers) */}
                 <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">
+                  <h3 className="text-sm font-medium text-white/70 mb-2">
                     Available Listings (Asks)
                   </h3>
                   <div className="space-y-1">
@@ -171,24 +173,24 @@ export default async function BuyEventPage({
                       .map((entry, idx) => (
                         <div
                           key={idx}
-                          className="flex justify-between text-sm py-1"
+                          className="flex justify-between text-sm py-2 px-3 rounded-lg bg-red-500/10"
                         >
-                          <span className="text-red-600 font-medium">
+                          <span className="text-red-400 font-medium">
                             ${(entry.price_cents / 100).toFixed(2)}
                           </span>
-                          <span className="text-gray-500">{entry.qty} tickets</span>
+                          <span className="text-white/50">{entry.qty} tickets</span>
                         </div>
                       ))}
                     {orderBookResult.data.filter((entry) => entry.book_side === 'ask')
                       .length === 0 && (
-                      <p className="text-sm text-gray-400 italic">No asks</p>
+                      <p className="text-sm text-white/40 italic">No asks</p>
                     )}
                   </div>
                 </div>
 
                 {/* Bids (Buyers) */}
                 <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">
+                  <h3 className="text-sm font-medium text-white/70 mb-2">
                     Active Bids (Buyers)
                   </h3>
                   <div className="space-y-1">
@@ -199,17 +201,17 @@ export default async function BuyEventPage({
                       .map((entry, idx) => (
                         <div
                           key={idx}
-                          className="flex justify-between text-sm py-1"
+                          className="flex justify-between text-sm py-2 px-3 rounded-lg bg-green-500/10"
                         >
-                          <span className="text-green-600 font-medium">
+                          <span className="text-green-400 font-medium">
                             ${(entry.price_cents / 100).toFixed(2)}
                           </span>
-                          <span className="text-gray-500">{entry.qty} tickets</span>
+                          <span className="text-white/50">{entry.qty} tickets</span>
                         </div>
                       ))}
                     {orderBookResult.data.filter((entry) => entry.book_side === 'bid')
                       .length === 0 && (
-                      <p className="text-sm text-gray-400 italic">No bids</p>
+                      <p className="text-sm text-white/40 italic">No bids</p>
                     )}
                   </div>
                 </div>
@@ -220,7 +222,7 @@ export default async function BuyEventPage({
 
         {/* User's Existing Bids */}
         {bidsResult.error && (
-          <div className="mb-8 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+          <div className="mb-8 rounded-xl border border-yellow-500/20 bg-yellow-500/10 p-4">
             <div className="flex items-start">
               <div className="flex-shrink-0">
                 <svg
@@ -237,10 +239,10 @@ export default async function BuyEventPage({
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-yellow-800">
+                <h3 className="text-sm font-medium text-yellow-400">
                   Could not load your bids
                 </h3>
-                <div className="mt-2 text-sm text-yellow-700">
+                <div className="mt-2 text-sm text-yellow-300/80">
                   <p>{bidsResult.error}</p>
                 </div>
               </div>
@@ -255,10 +257,10 @@ export default async function BuyEventPage({
         )}
 
         {/* Bid Form */}
-        <div className="rounded-lg bg-white shadow-sm border border-gray-200 p-6">
+        <div className="glass rounded-2xl border border-white/10 p-6">
           <div className="mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Place a Bid</h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <h2 className="text-xl font-semibold text-white">Place a Bid</h2>
+            <p className="mt-1 text-sm text-white/50">
               Enter the maximum price you're willing to pay and the quantity you want
             </p>
           </div>

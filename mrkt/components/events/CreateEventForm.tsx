@@ -118,7 +118,7 @@ export function CreateEventForm() {
       <div>
         <label
           htmlFor="title"
-          className="block text-sm font-medium leading-6 text-gray-900"
+          className="block text-sm font-medium text-white mb-2"
         >
           Event Title
         </label>
@@ -129,15 +129,15 @@ export function CreateEventForm() {
           placeholder="Fall Networking Mixer"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[var(--color-crimson)] sm:text-sm sm:leading-6"
+          className="block w-full rounded-lg bg-white/5 border border-white/20 px-4 py-3 text-white placeholder:text-white/40 focus:ring-2 focus:ring-[var(--color-crimson)] focus:border-transparent sm:text-sm"
           disabled={isSubmitting}
           maxLength={200}
         />
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-sm text-white/50">
           A descriptive name for your event
         </p>
         {validationErrors.title && (
-          <p className="mt-2 text-sm text-red-600">{validationErrors.title}</p>
+          <p className="mt-2 text-sm text-red-400">{validationErrors.title}</p>
         )}
       </div>
 
@@ -145,7 +145,7 @@ export function CreateEventForm() {
       <div>
         <label
           htmlFor="org"
-          className="block text-sm font-medium leading-6 text-gray-900"
+          className="block text-sm font-medium text-white mb-2"
         >
           Organization
         </label>
@@ -156,15 +156,15 @@ export function CreateEventForm() {
           placeholder="Tech Club"
           value={org}
           onChange={(e) => setOrg(e.target.value)}
-          className="mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[var(--color-crimson)] sm:text-sm sm:leading-6"
+          className="block w-full rounded-lg bg-white/5 border border-white/20 px-4 py-3 text-white placeholder:text-white/40 focus:ring-2 focus:ring-[var(--color-crimson)] focus:border-transparent sm:text-sm"
           disabled={isSubmitting}
           maxLength={100}
         />
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-sm text-white/50">
           The club or organization hosting this event
         </p>
         {validationErrors.org && (
-          <p className="mt-2 text-sm text-red-600">{validationErrors.org}</p>
+          <p className="mt-2 text-sm text-red-400">{validationErrors.org}</p>
         )}
       </div>
 
@@ -172,7 +172,7 @@ export function CreateEventForm() {
       <div>
         <label
           htmlFor="startsAt"
-          className="block text-sm font-medium leading-6 text-gray-900"
+          className="block text-sm font-medium text-white mb-2"
         >
           Start Date & Time
         </label>
@@ -182,14 +182,14 @@ export function CreateEventForm() {
           id="startsAt"
           value={startsAt}
           onChange={(e) => setStartsAt(e.target.value)}
-          className="mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[var(--color-crimson)] sm:text-sm sm:leading-6"
+          className="block w-full rounded-lg bg-white/5 border border-white/20 px-4 py-3 text-white focus:ring-2 focus:ring-[var(--color-crimson)] focus:border-transparent sm:text-sm [color-scheme:dark]"
           disabled={isSubmitting}
         />
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-sm text-white/50">
           When does the event start?
         </p>
         {validationErrors.startsAt && (
-          <p className="mt-2 text-sm text-red-600">{validationErrors.startsAt}</p>
+          <p className="mt-2 text-sm text-red-400">{validationErrors.startsAt}</p>
         )}
       </div>
 
@@ -197,7 +197,7 @@ export function CreateEventForm() {
       <div>
         <label
           htmlFor="endsAt"
-          className="block text-sm font-medium leading-6 text-gray-900"
+          className="block text-sm font-medium text-white mb-2"
         >
           End Date & Time
         </label>
@@ -207,14 +207,14 @@ export function CreateEventForm() {
           id="endsAt"
           value={endsAt}
           onChange={(e) => setEndsAt(e.target.value)}
-          className="mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[var(--color-crimson)] sm:text-sm sm:leading-6"
+          className="block w-full rounded-lg bg-white/5 border border-white/20 px-4 py-3 text-white focus:ring-2 focus:ring-[var(--color-crimson)] focus:border-transparent sm:text-sm [color-scheme:dark]"
           disabled={isSubmitting}
         />
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-sm text-white/50">
           When does the event end?
         </p>
         {validationErrors.endsAt && (
-          <p className="mt-2 text-sm text-red-600">{validationErrors.endsAt}</p>
+          <p className="mt-2 text-sm text-red-400">{validationErrors.endsAt}</p>
         )}
       </div>
 
@@ -234,7 +234,7 @@ export function CreateEventForm() {
         <button
           type="button"
           onClick={() => router.push('/dashboard')}
-          className="text-sm text-gray-600 hover:text-gray-900"
+          className="text-sm text-white/60 hover:text-white transition-colors"
           disabled={isSubmitting}
         >
           Cancel and return to dashboard

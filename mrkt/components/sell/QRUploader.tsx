@@ -7,6 +7,8 @@
  * - Image preview
  * - Upload progress tracking
  * - Error handling
+ *
+ * Premium dark theme styling.
  */
 
 'use client'
@@ -162,18 +164,18 @@ export function QRUploader({
     <div>
       <label
         htmlFor="qr-upload"
-        className="block text-sm font-medium leading-6 text-gray-900"
+        className="block text-sm font-medium text-white mb-2"
       >
-        QR Code Image <span className="text-red-500">*</span>
+        QR Code Image <span className="text-red-400">*</span>
       </label>
 
       {/* Upload Area */}
       {!file ? (
         <div
-          className={`mt-2 flex justify-center rounded-lg border border-dashed px-6 py-10 ${
+          className={`flex justify-center rounded-xl border-2 border-dashed px-6 py-10 transition-colors ${
             dragActive
-              ? 'border-[var(--color-crimson)] bg-red-50'
-              : 'border-gray-900/25'
+              ? 'border-[var(--color-crimson)] bg-[var(--color-crimson)]/10'
+              : 'border-white/20 hover:border-white/40'
           } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -183,7 +185,7 @@ export function QRUploader({
         >
           <div className="text-center">
             <svg
-              className="mx-auto h-12 w-12 text-gray-300"
+              className="mx-auto h-12 w-12 text-white/30"
               viewBox="0 0 24 24"
               fill="currentColor"
               aria-hidden="true"
@@ -194,13 +196,13 @@ export function QRUploader({
                 clipRule="evenodd"
               />
             </svg>
-            <div className="mt-4 flex text-sm leading-6 text-gray-600">
+            <div className="mt-4 flex text-sm text-white/60">
               <span className="font-semibold text-[var(--color-crimson)]">
                 {dragActive ? 'Drop file here' : 'Click to upload'}
               </span>
               <p className="pl-1">or drag and drop</p>
             </div>
-            <p className="text-xs leading-5 text-gray-600">
+            <p className="text-xs text-white/40 mt-2">
               PNG, JPEG, or PDF up to{' '}
               {formatFileSize(MAX_QR_FILE_SIZE)}
             </p>
@@ -208,7 +210,7 @@ export function QRUploader({
         </div>
       ) : (
         /* File Preview */
-        <div className="mt-2 rounded-lg border border-gray-300 bg-white p-4">
+        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
           <div className="flex items-start justify-between">
             <div className="flex items-start space-x-4 flex-1">
               {/* Image Preview or PDF Icon */}
@@ -216,12 +218,12 @@ export function QRUploader({
                 <img
                   src={preview}
                   alt="QR Code Preview"
-                  className="h-20 w-20 rounded object-cover border border-gray-200"
+                  className="h-20 w-20 rounded-lg object-cover border border-white/10"
                 />
               ) : (
-                <div className="h-20 w-20 rounded bg-gray-100 flex items-center justify-center border border-gray-200">
+                <div className="h-20 w-20 rounded-lg bg-white/5 flex items-center justify-center border border-white/10">
                   <svg
-                    className="h-10 w-10 text-gray-400"
+                    className="h-10 w-10 text-white/40"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -238,13 +240,13 @@ export function QRUploader({
 
               {/* File Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
+                <p className="text-sm font-medium text-white truncate">
                   {file.name}
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-white/50">
                   {formatFileSize(file.size)}
                 </p>
-                <p className="text-xs text-green-600 mt-1">
+                <p className="text-xs text-green-400 mt-1">
                   ✓ File ready for upload
                 </p>
               </div>
@@ -255,7 +257,7 @@ export function QRUploader({
               <button
                 type="button"
                 onClick={handleRemove}
-                className="ml-4 rounded-md bg-white text-sm font-medium text-gray-700 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[var(--color-crimson)] focus:ring-offset-2"
+                className="ml-4 rounded-lg bg-white/10 p-2 text-white/60 hover:text-white hover:bg-white/20 transition-colors"
               >
                 <svg
                   className="h-5 w-5"
@@ -283,13 +285,13 @@ export function QRUploader({
       />
 
       {/* Help Text */}
-      <p className="mt-2 text-sm text-gray-500">
+      <p className="mt-2 text-sm text-white/50">
         Upload a redacted screenshot or image of your ticket QR code
       </p>
 
       {/* Error Message */}
       {displayError && (
-        <p className="mt-2 text-sm text-red-600">{displayError}</p>
+        <p className="mt-2 text-sm text-red-400">{displayError}</p>
       )}
     </div>
   )

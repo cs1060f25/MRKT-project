@@ -2,8 +2,10 @@
  * EventHeader Component
  *
  * Displays event metadata including title, organization, and dates.
+ * Premium dark theme styling.
  */
 
+import Link from 'next/link'
 import type { EventDetails } from '@/lib/events/types'
 
 interface EventHeaderProps {
@@ -27,18 +29,19 @@ export function EventHeader({ event }: EventHeaderProps) {
 
   return (
     <div className="mb-8">
-      <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-        <a href="/" className="hover:text-gray-700">Home</a>
-        <span>›</span>
-        <span>Event Details</span>
+      <div className="flex items-center gap-2 text-sm text-white/50 mb-4">
+        <Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link>
+        <span className="text-white/30">›</span>
+        <span className="text-white/70">Event Details</span>
       </div>
-      
-      <h1 className="text-3xl font-bold text-gray-900">{event.title}</h1>
-      
+
+      <div className="elegant-divider mb-4" />
+      <h1 className="font-[var(--font-playfair)] text-3xl font-bold text-white">{event.title}</h1>
+
       <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-4 text-sm">
-        <div className="flex items-center gap-2 text-gray-600">
+        <div className="flex items-center gap-2 text-white/60">
           <svg
-            className="h-5 w-5 text-gray-400"
+            className="h-5 w-5 text-white/40"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -50,12 +53,12 @@ export function EventHeader({ event }: EventHeaderProps) {
               d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
             />
           </svg>
-          <span className="font-medium">{event.org}</span>
+          <span className="font-medium text-white">{event.org}</span>
         </div>
-        
-        <div className="flex items-center gap-2 text-gray-600">
+
+        <div className="flex items-center gap-2 text-white/60">
           <svg
-            className="h-5 w-5 text-gray-400"
+            className="h-5 w-5 text-white/40"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -69,7 +72,7 @@ export function EventHeader({ event }: EventHeaderProps) {
           </svg>
           <div>
             <span>{startDate}</span>
-            <span className="text-gray-400"> - </span>
+            <span className="text-white/30"> - </span>
             <span>{endDate}</span>
           </div>
         </div>
@@ -77,4 +80,3 @@ export function EventHeader({ event }: EventHeaderProps) {
     </div>
   )
 }
-
