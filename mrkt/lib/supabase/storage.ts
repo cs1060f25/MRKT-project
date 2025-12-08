@@ -8,16 +8,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 /**
- * Allowed file types for QR code uploads
+ * Allowed file types for QR code uploads (PNG only)
  */
-export const ALLOWED_QR_MIME_TYPES = [
-  'image/png',
-  'image/jpeg',
-  'image/jpg',
-  'application/pdf',
-] as const
+export const ALLOWED_QR_MIME_TYPES = ['image/png'] as const
 
-export const ALLOWED_QR_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.pdf'] as const
+export const ALLOWED_QR_EXTENSIONS = ['.png'] as const
 
 /**
  * Maximum file size for QR codes (10MB)
@@ -60,7 +55,7 @@ export function validateQRFile(file: File): string | null {
 
   // Check file type by MIME type
   if (!ALLOWED_QR_MIME_TYPES.includes(file.type as any)) {
-    return `File type not allowed. Please upload a PNG, JPEG, or PDF file.`
+    return `File type not allowed. Please upload a PNG file.`
   }
 
   // Additional check: validate file extension
@@ -87,15 +82,8 @@ export function generateQRStoragePath(
   askId: string,
   file: File
 ): string {
-  // Determine extension from file type
-  let extension = 'png'
-  if (file.type === 'image/jpeg' || file.type === 'image/jpg') {
-    extension = 'jpeg'
-  } else if (file.type === 'application/pdf') {
-    extension = 'pdf'
-  }
-
-  return `${eventId}/${askId}/qr.${extension}`
+  // Only PNG is supported
+  return `${eventId}/${askId}/qr.png`
 }
 
 /**

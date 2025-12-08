@@ -22,26 +22,26 @@ export async function POST(
       traceId: crypto.randomUUID() // Simple trace ID
     })
 
-    // 1. Fetch Open Asks (Sorted by Price ASC, Created At ASC)
-    // Cheapest asks first - maximizes transaction count
+    // 1. Fetch Open Asks (Sorted by Price DESC, Created At ASC)
+    // Highest asks first - highest bidders get matched with highest-value asks
     const { data: asks, error: asksError } = await supabase
       .from('asks')
       .select('*')
       .eq('event_id', eventId)
       .eq('status', 'open')
-      .order('price_cents', { ascending: true })
+      .order('price_cents', { ascending: false })
       .order('created_at', { ascending: true })
 
     if (asksError) throw asksError
 
-    // 2. Fetch Open Bids (Sorted by Price ASC, Created At ASC)
-    // Lowest bids first - pairs cheapest viable bid with cheapest ask
+    // 2. Fetch Open Bids (Sorted by Price DESC, Created At ASC)
+    // Highest bids first - prioritizes buyers willing to pay more
     const { data: bids, error: bidsError } = await supabase
       .from('bids')
       .select('*')
       .eq('event_id', eventId)
       .eq('status', 'open')
-      .order('price_cents', { ascending: true })
+      .order('price_cents', { ascending: false })
       .order('created_at', { ascending: true })
 
     if (bidsError) throw bidsError
@@ -52,62 +52,61 @@ export async function POST(
     const asksToUpdate = []
     const bidsToUpdate = []
 
-    // 3. Matching Logic - Two-Pointer Algorithm for Maximum Liquidity
-    // Both lists sorted ascending: pairs cheapest ask with cheapest viable bid
-    // This maximizes the number of successful transactions
-    let askIdx = 0
-    let bidIdx = 0
+    // 3. Matching Logic - Priority Matching Algorithm
+    // Both lists sorted descending: highest bidders get first pick of highest-value asks
+    // For each bid, find the highest ask it can afford (bid >= ask)
+    // Clearing price = midpoint between bid and ask (fair for both parties)
 
-    while (askIdx < asks.length && bidIdx < bids.length) {
-      const ask = asks[askIdx]
-      const bid = bids[bidIdx]
+    for (const bid of bids) {
+      // Skip exhausted bids
+      if (bid.qty <= 0) continue
 
-      // Skip exhausted orders
-      if (ask.qty <= 0) { askIdx++; continue }
-      if (bid.qty <= 0) { bidIdx++; continue }
+      // Find the highest ask this bid can afford
+      for (const ask of asks) {
+        // Skip exhausted asks
+        if (ask.qty <= 0) continue
 
-      // Rule: No self-matching
-      if (ask.seller_id === bid.buyer_id) { bidIdx++; continue }
+        // Rule: No self-matching
+        if (ask.seller_id === bid.buyer_id) continue
 
-      // Rule: Bid must be >= Ask
-      if (bid.price_cents >= ask.price_cents) {
-        // Match found!
-        const matchQty = Math.min(ask.qty, bid.qty)
-        const clearingPrice = ask.price_cents // Clearing price = ask floor
-        const matchId = crypto.randomUUID()
+        // Rule: Bid must be >= Ask
+        if (bid.price_cents >= ask.price_cents) {
+          // Match found! This is the highest viable ask for this bid
+          const matchQty = Math.min(ask.qty, bid.qty)
 
-        // Prepare Match Record
-        matchesToCreate.push({
-          id: matchId,
-          event_id: eventId,
-          ask_id: ask.id,
-          bid_id: bid.id,
-          clearing_price_cents: clearingPrice,
-          qty: matchQty
-        })
+          // Clearing price = midpoint (fair split between buyer and seller)
+          const clearingPrice = Math.floor((bid.price_cents + ask.price_cents) / 2)
+          const matchId = crypto.randomUUID()
 
-        // Create ticket if QR code exists
-        if (ask.qr_storage_path) {
-          ticketsToCreate.push({
-            id: crypto.randomUUID(),
-            match_id: matchId,
-            winner_id: bid.buyer_id,
-            qr_storage_path: ask.qr_storage_path,
-            delivered_at: new Date().toISOString(),
+          // Prepare Match Record
+          matchesToCreate.push({
+            id: matchId,
+            event_id: eventId,
+            ask_id: ask.id,
+            bid_id: bid.id,
+            clearing_price_cents: clearingPrice,
+            qty: matchQty
           })
+
+          // Create ticket if QR code exists
+          if (ask.qr_storage_path) {
+            ticketsToCreate.push({
+              id: crypto.randomUUID(),
+              match_id: matchId,
+              winner_id: bid.buyer_id,
+              qr_storage_path: ask.qr_storage_path,
+              delivered_at: new Date().toISOString(),
+            })
+          }
+
+          // Update quantities
+          ask.qty -= matchQty
+          bid.qty -= matchQty
+          matchesCount++
+
+          // If bid is exhausted, move to next bid
+          if (bid.qty <= 0) break
         }
-
-        // Update quantities
-        ask.qty -= matchQty
-        bid.qty -= matchQty
-        matchesCount++
-
-        // Advance pointers for exhausted orders
-        if (ask.qty <= 0) askIdx++
-        if (bid.qty <= 0) bidIdx++
-      } else {
-        // Bid too low for this ask - try next bid
-        bidIdx++
       }
     }
 

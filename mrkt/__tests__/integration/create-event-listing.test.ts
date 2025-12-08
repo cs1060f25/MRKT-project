@@ -64,7 +64,7 @@ describe('Integration: Create Event -> Post Listing', () => {
       storage: {
         from: jest.fn().mockReturnValue({
           upload: jest.fn().mockResolvedValue({
-            data: { path: `${TEST_EVENT_ID}/${TEST_ASK_ID}/qr.jpeg` },
+            data: { path: `${TEST_EVENT_ID}/${TEST_ASK_ID}/qr.png` },
             error: null,
           }),
         }),

@@ -30,14 +30,18 @@ describe('validateQRFile', () => {
     expect(validateQRFile(file)).toBeNull()
   })
 
-  it('should return null for valid JPEG file', () => {
+  it('should return error for JPEG file (PNG only)', () => {
     const file = createMockFile('qr.jpeg', 'image/jpeg', 1024 * 1024)
-    expect(validateQRFile(file)).toBeNull()
+    const error = validateQRFile(file)
+    expect(error).not.toBeNull()
+    expect(error).toContain('PNG')
   })
 
-  it('should return null for valid PDF file', () => {
+  it('should return error for PDF file (PNG only)', () => {
     const file = createMockFile('qr.pdf', 'application/pdf', 1024 * 1024)
-    expect(validateQRFile(file)).toBeNull()
+    const error = validateQRFile(file)
+    expect(error).not.toBeNull()
+    expect(error).toContain('PNG')
   })
 
   it('should return error for file exceeding 10MB', () => {
@@ -65,22 +69,17 @@ describe('validateQRFile', () => {
 })
 
 describe('generateQRStoragePath', () => {
-  it('should generate correct path for PNG file', () => {
+  it('should generate correct path with .png extension', () => {
     const file = createMockFile('ticket.png', 'image/png')
     const path = generateQRStoragePath('event-123', 'ask-456', file)
     expect(path).toBe('event-123/ask-456/qr.png')
   })
 
-  it('should generate correct path for JPEG file', () => {
+  it('should always use .png extension regardless of input', () => {
+    // Even if somehow a non-PNG file was passed, path should be .png
     const file = createMockFile('ticket.jpg', 'image/jpeg')
     const path = generateQRStoragePath('event-123', 'ask-456', file)
-    expect(path).toBe('event-123/ask-456/qr.jpeg')
-  })
-
-  it('should generate correct path for PDF file', () => {
-    const file = createMockFile('ticket.pdf', 'application/pdf')
-    const path = generateQRStoragePath('event-123', 'ask-456', file)
-    expect(path).toBe('event-123/ask-456/qr.pdf')
+    expect(path).toBe('event-123/ask-456/qr.png')
   })
 })
 

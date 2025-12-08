@@ -161,7 +161,7 @@ describe('POST /api/events/[eventId]/match', () => {
         event_id: TEST_EVENT_ID,
         ask_id: TEST_ASK_ID,
         bid_id: TEST_BID_ID,
-        clearing_price_cents: 5000, // Ask floor price
+        clearing_price_cents: 5500, // Midpoint: (5000 + 6000) / 2
         qty: 1,
       })
     })
@@ -414,9 +414,10 @@ describe('POST /api/events/[eventId]/match', () => {
   })
 
   describe('Clearing Price Logic', () => {
-    it('should set clearing price to ask floor (ask price)', async () => {
+    it('should set clearing price to midpoint between bid and ask', async () => {
       const ASK_PRICE = 5000
       const BID_PRICE = 7000
+      const EXPECTED_MIDPOINT = Math.floor((ASK_PRICE + BID_PRICE) / 2) // 6000
 
       const asksData = [
         {
@@ -460,7 +461,7 @@ describe('POST /api/events/[eventId]/match', () => {
       const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data.matches[0].clearing_price_cents).toBe(ASK_PRICE)
+      expect(data.matches[0].clearing_price_cents).toBe(EXPECTED_MIDPOINT)
     })
   })
 })
