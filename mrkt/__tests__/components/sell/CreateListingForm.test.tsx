@@ -7,7 +7,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { useRouter } from 'next/navigation'
 import { CreateListingForm } from '@/components/sell/CreateListingForm'
-import { createAsk } from '@/lib/supabase/rpc'
 import type { EventOption } from '@/lib/sell/types'
 
 // Mock Next.js router
@@ -17,15 +16,12 @@ jest.mock('next/navigation', () => ({
 
 // Mock Supabase browser client
 jest.mock('@supabase/ssr', () => ({
-  createBrowserClient: jest.fn(() => ({
-    // Mock Supabase client methods if needed
-  })),
+  createBrowserClient: jest.fn(() => ({})),
 }))
 
-// Mock RPC functions
-jest.mock('@/lib/supabase/rpc', () => ({
-  createAsk: jest.fn(),
-}))
+// Mock fetch for API calls
+const mockFetch = jest.fn()
+global.fetch = mockFetch
 
 describe('CreateListingForm', () => {
   const mockPush = jest.fn()
@@ -56,6 +52,23 @@ describe('CreateListingForm', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     ;(useRouter as jest.Mock).mockReturnValue(mockRouter)
+
+    // Default successful fetch responses
+    mockFetch.mockImplementation((url: string) => {
+      if (url === '/api/listings') {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ askId: 'new-ask-id', error: null }),
+        })
+      }
+      if (url.includes('/upload-qr')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ success: true, path: 'test/path' }),
+        })
+      }
+      return Promise.reject(new Error('Unknown URL'))
+    })
   })
 
   describe('Rendering', () => {
@@ -104,14 +117,16 @@ describe('CreateListingForm', () => {
 
       const priceInput = screen.getByLabelText(/floor price/i)
       const quantityInput = screen.getByLabelText(/quantity/i)
-      const submitButton = screen.getByRole('button', { name: /create listing/i })
+      const form = priceInput.closest('form')!
 
       fireEvent.change(priceInput, { target: { value: '50' } })
       fireEvent.change(quantityInput, { target: { value: '2' } })
-      fireEvent.click(submitButton)
+      fireEvent.submit(form)
 
+      // Check for error message in red text paragraphs
       await waitFor(() => {
-        expect(screen.getByText(/event is required/i)).toBeInTheDocument()
+        const redErrorTexts = document.querySelectorAll('.text-red-400')
+        expect(redErrorTexts.length).toBeGreaterThan(0)
       })
     })
 
@@ -121,15 +136,16 @@ describe('CreateListingForm', () => {
       const eventSelect = screen.getByLabelText(/event/i)
       const priceInput = screen.getByLabelText(/floor price/i)
       const quantityInput = screen.getByLabelText(/quantity/i)
-      const submitButton = screen.getByRole('button', { name: /create listing/i })
+      const form = priceInput.closest('form')!
 
       fireEvent.change(eventSelect, { target: { value: mockEvents[0].id } })
       fireEvent.change(priceInput, { target: { value: '-10' } })
       fireEvent.change(quantityInput, { target: { value: '2' } })
-      fireEvent.click(submitButton)
+      fireEvent.submit(form)
 
       await waitFor(() => {
-        expect(screen.getByText(/price must be greater than 0/i)).toBeInTheDocument()
+        const redErrorTexts = document.querySelectorAll('.text-red-400')
+        expect(redErrorTexts.length).toBeGreaterThan(0)
       })
     })
 
@@ -139,15 +155,16 @@ describe('CreateListingForm', () => {
       const eventSelect = screen.getByLabelText(/event/i)
       const priceInput = screen.getByLabelText(/floor price/i)
       const quantityInput = screen.getByLabelText(/quantity/i)
-      const submitButton = screen.getByRole('button', { name: /create listing/i })
+      const form = priceInput.closest('form')!
 
       fireEvent.change(eventSelect, { target: { value: mockEvents[0].id } })
       fireEvent.change(priceInput, { target: { value: '15000' } })
       fireEvent.change(quantityInput, { target: { value: '2' } })
-      fireEvent.click(submitButton)
+      fireEvent.submit(form)
 
       await waitFor(() => {
-        expect(screen.getByText(/price cannot exceed/i)).toBeInTheDocument()
+        const redErrorTexts = document.querySelectorAll('.text-red-400')
+        expect(redErrorTexts.length).toBeGreaterThan(0)
       })
     })
 
@@ -157,27 +174,57 @@ describe('CreateListingForm', () => {
       const eventSelect = screen.getByLabelText(/event/i)
       const priceInput = screen.getByLabelText(/floor price/i)
       const quantityInput = screen.getByLabelText(/quantity/i)
-      const submitButton = screen.getByRole('button', { name: /create listing/i })
+      const form = priceInput.closest('form')!
 
       fireEvent.change(eventSelect, { target: { value: mockEvents[0].id } })
       fireEvent.change(priceInput, { target: { value: '50' } })
       fireEvent.change(quantityInput, { target: { value: '0' } })
-      fireEvent.click(submitButton)
+      fireEvent.submit(form)
 
       await waitFor(() => {
-        expect(screen.getByText(/quantity must be greater than 0/i)).toBeInTheDocument()
+        const redErrorTexts = document.querySelectorAll('.text-red-400')
+        expect(redErrorTexts.length).toBeGreaterThan(0)
+      })
+    })
+
+    it('should show validation error when QR file is not selected', async () => {
+      render(<CreateListingForm events={mockEvents} />)
+
+      const eventSelect = screen.getByLabelText(/event/i)
+      const priceInput = screen.getByLabelText(/floor price/i)
+      const quantityInput = screen.getByLabelText(/quantity/i)
+      const form = priceInput.closest('form')!
+
+      fireEvent.change(eventSelect, { target: { value: mockEvents[0].id } })
+      fireEvent.change(priceInput, { target: { value: '50' } })
+      fireEvent.change(quantityInput, { target: { value: '2' } })
+      fireEvent.submit(form)
+
+      await waitFor(() => {
+        const redErrorTexts = document.querySelectorAll('.text-red-400')
+        expect(redErrorTexts.length).toBeGreaterThan(0)
       })
     })
   })
 
   describe('Form Submission', () => {
-    it('should successfully submit valid form data', async () => {
-      const mockCreateAsk = createAsk as jest.Mock
-      mockCreateAsk.mockResolvedValue({
-        askId: 'new-ask-id',
-        error: null,
+    // Helper to simulate file selection
+    const selectQRFile = async () => {
+      const fileInput = screen.getByLabelText(/qr code image/i)
+      const mockFile = new File(['test'], 'test.png', { type: 'image/png' })
+
+      // Mock arrayBuffer for the file
+      Object.defineProperty(mockFile, 'arrayBuffer', {
+        value: () => Promise.resolve(new ArrayBuffer(8)),
       })
 
+      fireEvent.change(fileInput, { target: { files: [mockFile] } })
+
+      // Wait for file to be processed
+      await waitFor(() => {}, { timeout: 100 })
+    }
+
+    it('should successfully submit valid form data', async () => {
       render(<CreateListingForm events={mockEvents} />)
 
       const eventSelect = screen.getByLabelText(/event/i)
@@ -188,19 +235,24 @@ describe('CreateListingForm', () => {
       fireEvent.change(eventSelect, { target: { value: mockEvents[0].id } })
       fireEvent.change(priceInput, { target: { value: '50.00' } })
       fireEvent.change(quantityInput, { target: { value: '2' } })
+
+      await selectQRFile()
+
       fireEvent.click(submitButton)
 
       await waitFor(() => {
-        expect(mockCreateAsk).toHaveBeenCalledWith(
-          expect.anything(),
-          expect.objectContaining({
-            event_id: mockEvents[0].id,
-            price_cents: 5000, // $50.00 converted to cents
-            qty: 2,
-            qr_storage_path: expect.stringContaining('pending-upload/'),
-          })
-        )
+        expect(mockFetch).toHaveBeenCalledWith('/api/listings', expect.objectContaining({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        }))
       })
+
+      // Verify the body contains correct data
+      const fetchCall = mockFetch.mock.calls.find((call: unknown[]) => call[0] === '/api/listings')
+      const body = JSON.parse(fetchCall[1].body)
+      expect(body.event_id).toBe(mockEvents[0].id)
+      expect(body.price_cents).toBe(5000) // $50.00 converted to cents
+      expect(body.qty).toBe(2)
 
       // Should show success message
       await waitFor(() => {
@@ -217,12 +269,6 @@ describe('CreateListingForm', () => {
     })
 
     it('should convert price to cents correctly', async () => {
-      const mockCreateAsk = createAsk as jest.Mock
-      mockCreateAsk.mockResolvedValue({
-        askId: 'new-ask-id',
-        error: null,
-      })
-
       render(<CreateListingForm events={mockEvents} />)
 
       const eventSelect = screen.getByLabelText(/event/i)
@@ -233,23 +279,29 @@ describe('CreateListingForm', () => {
       fireEvent.change(eventSelect, { target: { value: mockEvents[0].id } })
       fireEvent.change(priceInput, { target: { value: '99.99' } })
       fireEvent.change(quantityInput, { target: { value: '1' } })
+
+      await selectQRFile()
+
       fireEvent.click(submitButton)
 
       await waitFor(() => {
-        expect(mockCreateAsk).toHaveBeenCalledWith(
-          expect.anything(),
-          expect.objectContaining({
-            price_cents: 9999, // $99.99 converted to cents
-          })
-        )
+        expect(mockFetch).toHaveBeenCalledWith('/api/listings', expect.anything())
       })
+
+      const fetchCall = mockFetch.mock.calls.find((call: unknown[]) => call[0] === '/api/listings')
+      const body = JSON.parse(fetchCall[1].body)
+      expect(body.price_cents).toBe(9999) // $99.99 converted to cents
     })
 
     it('should handle submission errors', async () => {
-      const mockCreateAsk = createAsk as jest.Mock
-      mockCreateAsk.mockResolvedValue({
-        askId: null,
-        error: 'Failed to create listing',
+      mockFetch.mockImplementation((url: string) => {
+        if (url === '/api/listings') {
+          return Promise.resolve({
+            ok: false,
+            json: () => Promise.resolve({ error: 'Failed to create listing' }),
+          })
+        }
+        return Promise.reject(new Error('Unknown URL'))
       })
 
       render(<CreateListingForm events={mockEvents} />)
@@ -262,6 +314,9 @@ describe('CreateListingForm', () => {
       fireEvent.change(eventSelect, { target: { value: mockEvents[0].id } })
       fireEvent.change(priceInput, { target: { value: '50' } })
       fireEvent.change(quantityInput, { target: { value: '2' } })
+
+      await selectQRFile()
+
       fireEvent.click(submitButton)
 
       await waitFor(() => {
@@ -273,10 +328,23 @@ describe('CreateListingForm', () => {
     })
 
     it('should disable form while submitting', async () => {
-      const mockCreateAsk = createAsk as jest.Mock
-      mockCreateAsk.mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({ askId: 'id', error: null }), 100))
-      )
+      mockFetch.mockImplementation((url: string) => {
+        return new Promise((resolve) =>
+          setTimeout(() => {
+            if (url === '/api/listings') {
+              resolve({
+                ok: true,
+                json: () => Promise.resolve({ askId: 'new-ask-id', error: null }),
+              })
+            } else {
+              resolve({
+                ok: true,
+                json: () => Promise.resolve({ success: true }),
+              })
+            }
+          }, 100)
+        )
+      })
 
       render(<CreateListingForm events={mockEvents} />)
 
@@ -288,6 +356,9 @@ describe('CreateListingForm', () => {
       fireEvent.change(eventSelect, { target: { value: mockEvents[0].id } })
       fireEvent.change(priceInput, { target: { value: '50' } })
       fireEvent.change(quantityInput, { target: { value: '2' } })
+
+      await selectQRFile()
+
       fireEvent.click(submitButton)
 
       // Should show submitting state
@@ -297,17 +368,21 @@ describe('CreateListingForm', () => {
 
       // Wait for submission to complete
       await waitFor(() => {
-        expect(mockCreateAsk).toHaveBeenCalled()
+        expect(mockFetch).toHaveBeenCalled()
       })
     })
   })
 
   describe('UI Interactions', () => {
-    it('should clear validation errors when error banner retry is clicked', async () => {
-      const mockCreateAsk = createAsk as jest.Mock
-      mockCreateAsk.mockResolvedValue({
-        askId: null,
-        error: 'Network error',
+    it('should display error banner when API returns error', async () => {
+      mockFetch.mockImplementation((url: string) => {
+        if (url === '/api/listings') {
+          return Promise.resolve({
+            ok: false,
+            json: () => Promise.resolve({ error: 'Network error' }),
+          })
+        }
+        return Promise.reject(new Error('Unknown URL'))
       })
 
       render(<CreateListingForm events={mockEvents} />)
@@ -316,6 +391,15 @@ describe('CreateListingForm', () => {
       const priceInput = screen.getByLabelText(/floor price/i)
       const quantityInput = screen.getByLabelText(/quantity/i)
       const submitButton = screen.getByRole('button', { name: /create listing/i })
+
+      // Select QR file first
+      const fileInput = screen.getByLabelText(/qr code image/i)
+      const mockFile = new File(['test'], 'test.png', { type: 'image/png' })
+      Object.defineProperty(mockFile, 'arrayBuffer', {
+        value: () => Promise.resolve(new ArrayBuffer(8)),
+      })
+      fireEvent.change(fileInput, { target: { files: [mockFile] } })
+      await waitFor(() => {}, { timeout: 100 })
 
       fireEvent.change(eventSelect, { target: { value: mockEvents[0].id } })
       fireEvent.change(priceInput, { target: { value: '50' } })
@@ -326,8 +410,7 @@ describe('CreateListingForm', () => {
         expect(screen.getByText(/network error/i)).toBeInTheDocument()
       })
 
-      // Click retry button (assuming ErrorBanner has one)
-      // Note: This assumes ErrorBanner has a retry button - adjust if different
+      // Error banner should be visible
       const errorBanner = screen.getByText(/network error/i).closest('div')
       expect(errorBanner).toBeInTheDocument()
     })

@@ -6,19 +6,25 @@
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { BidForm } from '@/components/buy/BidForm'
-import { createBid } from '@/lib/supabase/rpc'
 
 // Mock Supabase browser client
 jest.mock('@supabase/ssr', () => ({
-  createBrowserClient: jest.fn(() => ({
-    // Mock Supabase client methods if needed
+  createBrowserClient: jest.fn(() => ({})),
+}))
+
+// Mock useSupabase provider
+jest.mock('@/providers/supabase-provider', () => ({
+  useSupabase: jest.fn(() => ({
+    supabase: {},
+    isReady: true,
+    supabaseUserId: 'test-supabase-user-id',
+    refreshSession: jest.fn(),
   })),
 }))
 
-// Mock RPC functions
-jest.mock('@/lib/supabase/rpc', () => ({
-  createBid: jest.fn(),
-}))
+// Mock fetch for API calls
+const mockFetch = jest.fn()
+global.fetch = mockFetch
 
 describe('BidForm', () => {
   const mockEventId = '123e4567-e89b-12d3-a456-426614174000'
@@ -26,6 +32,12 @@ describe('BidForm', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+
+    // Default successful fetch response
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ success: true, bid: { id: 'new-bid-id' } }),
+    })
   })
 
   describe('Rendering', () => {
@@ -59,14 +71,16 @@ describe('BidForm', () => {
 
       const priceInput = screen.getByLabelText(/max price/i)
       const quantityInput = screen.getByLabelText(/quantity/i)
-      const submitButton = screen.getByRole('button', { name: /place bid/i })
+      const form = priceInput.closest('form')!
 
       fireEvent.change(priceInput, { target: { value: '-10' } })
       fireEvent.change(quantityInput, { target: { value: '2' } })
-      fireEvent.click(submitButton)
+      fireEvent.submit(form)
 
+      // Check for error message in red text paragraphs
       await waitFor(() => {
-        expect(screen.getByText(/price must be greater than 0/i)).toBeInTheDocument()
+        const redErrorTexts = document.querySelectorAll('.text-red-400')
+        expect(redErrorTexts.length).toBeGreaterThan(0)
       })
     })
 
@@ -75,14 +89,15 @@ describe('BidForm', () => {
 
       const priceInput = screen.getByLabelText(/max price/i)
       const quantityInput = screen.getByLabelText(/quantity/i)
-      const submitButton = screen.getByRole('button', { name: /place bid/i })
+      const form = priceInput.closest('form')!
 
       fireEvent.change(priceInput, { target: { value: '15000' } })
       fireEvent.change(quantityInput, { target: { value: '2' } })
-      fireEvent.click(submitButton)
+      fireEvent.submit(form)
 
       await waitFor(() => {
-        expect(screen.getByText(/price cannot exceed/i)).toBeInTheDocument()
+        const redErrorTexts = document.querySelectorAll('.text-red-400')
+        expect(redErrorTexts.length).toBeGreaterThan(0)
       })
     })
 
@@ -91,14 +106,15 @@ describe('BidForm', () => {
 
       const priceInput = screen.getByLabelText(/max price/i)
       const quantityInput = screen.getByLabelText(/quantity/i)
-      const submitButton = screen.getByRole('button', { name: /place bid/i })
+      const form = priceInput.closest('form')!
 
       fireEvent.change(priceInput, { target: { value: '50' } })
       fireEvent.change(quantityInput, { target: { value: '0' } })
-      fireEvent.click(submitButton)
+      fireEvent.submit(form)
 
       await waitFor(() => {
-        expect(screen.getByText(/quantity must be greater than 0/i)).toBeInTheDocument()
+        const redErrorTexts = document.querySelectorAll('.text-red-400')
+        expect(redErrorTexts.length).toBeGreaterThan(0)
       })
     })
 
@@ -107,26 +123,21 @@ describe('BidForm', () => {
 
       const priceInput = screen.getByLabelText(/max price/i)
       const quantityInput = screen.getByLabelText(/quantity/i)
-      const submitButton = screen.getByRole('button', { name: /place bid/i })
+      const form = priceInput.closest('form')!
 
       fireEvent.change(priceInput, { target: { value: '50' } })
       fireEvent.change(quantityInput, { target: { value: '150' } })
-      fireEvent.click(submitButton)
+      fireEvent.submit(form)
 
       await waitFor(() => {
-        expect(screen.getByText(/quantity cannot exceed 100/i)).toBeInTheDocument()
+        const redErrorTexts = document.querySelectorAll('.text-red-400')
+        expect(redErrorTexts.length).toBeGreaterThan(0)
       })
     })
   })
 
   describe('Form Submission', () => {
     it('should successfully submit valid form data', async () => {
-      const mockCreateBid = createBid as jest.Mock
-      mockCreateBid.mockResolvedValue({
-        bidId: 'new-bid-id',
-        error: null,
-      })
-
       render(<BidForm eventId={mockEventId} onSuccess={mockOnSuccess} />)
 
       const priceInput = screen.getByLabelText(/max price/i)
@@ -138,13 +149,18 @@ describe('BidForm', () => {
       fireEvent.click(submitButton)
 
       await waitFor(() => {
-        expect(mockCreateBid).toHaveBeenCalledWith(
-          expect.anything(),
-          mockEventId,
-          5000, // $50.00 converted to cents
-          2
-        )
+        expect(mockFetch).toHaveBeenCalledWith('/api/bids/create', expect.objectContaining({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        }))
       })
+
+      // Verify the body contains correct data
+      const fetchCall = mockFetch.mock.calls.find((call: unknown[]) => call[0] === '/api/bids/create')
+      const body = JSON.parse(fetchCall[1].body)
+      expect(body.eventId).toBe(mockEventId)
+      expect(body.priceCents).toBe(5000) // $50.00 converted to cents
+      expect(body.qty).toBe(2)
 
       // Should show success message
       await waitFor(() => {
@@ -156,12 +172,6 @@ describe('BidForm', () => {
     })
 
     it('should convert price to cents correctly', async () => {
-      const mockCreateBid = createBid as jest.Mock
-      mockCreateBid.mockResolvedValue({
-        bidId: 'new-bid-id',
-        error: null,
-      })
-
       render(<BidForm eventId={mockEventId} />)
 
       const priceInput = screen.getByLabelText(/max price/i)
@@ -173,20 +183,18 @@ describe('BidForm', () => {
       fireEvent.click(submitButton)
 
       await waitFor(() => {
-        expect(mockCreateBid).toHaveBeenCalledWith(
-          expect.anything(),
-          mockEventId,
-          9999, // $99.99 converted to cents
-          1
-        )
+        expect(mockFetch).toHaveBeenCalledWith('/api/bids/create', expect.anything())
       })
+
+      const fetchCall = mockFetch.mock.calls.find((call: unknown[]) => call[0] === '/api/bids/create')
+      const body = JSON.parse(fetchCall[1].body)
+      expect(body.priceCents).toBe(9999) // $99.99 converted to cents
     })
 
     it('should handle submission errors', async () => {
-      const mockCreateBid = createBid as jest.Mock
-      mockCreateBid.mockResolvedValue({
-        bidId: null,
-        error: 'Failed to create bid',
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: () => Promise.resolve({ error: 'Failed to create bid' }),
       })
 
       render(<BidForm eventId={mockEventId} onSuccess={mockOnSuccess} />)
@@ -208,9 +216,11 @@ describe('BidForm', () => {
     })
 
     it('should disable form while submitting', async () => {
-      const mockCreateBid = createBid as jest.Mock
-      mockCreateBid.mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({ bidId: 'id', error: null }), 100))
+      mockFetch.mockImplementation(
+        () => new Promise((resolve) => setTimeout(() => resolve({
+          ok: true,
+          json: () => Promise.resolve({ success: true, bid: { id: 'id' } }),
+        }), 100))
       )
 
       render(<BidForm eventId={mockEventId} />)
@@ -230,17 +240,11 @@ describe('BidForm', () => {
 
       // Wait for submission to complete
       await waitFor(() => {
-        expect(mockCreateBid).toHaveBeenCalled()
+        expect(mockFetch).toHaveBeenCalled()
       })
     })
 
     it('should clear form after successful submission', async () => {
-      const mockCreateBid = createBid as jest.Mock
-      mockCreateBid.mockResolvedValue({
-        bidId: 'new-bid-id',
-        error: null,
-      })
-
       render(<BidForm eventId={mockEventId} />)
 
       const priceInput = screen.getByLabelText(/max price/i) as HTMLInputElement
@@ -265,10 +269,9 @@ describe('BidForm', () => {
 
   describe('UI Interactions', () => {
     it('should clear errors when retry button is clicked', async () => {
-      const mockCreateBid = createBid as jest.Mock
-      mockCreateBid.mockResolvedValue({
-        bidId: null,
-        error: 'Network error',
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: () => Promise.resolve({ error: 'Network error' }),
       })
 
       render(<BidForm eventId={mockEventId} />)

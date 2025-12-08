@@ -11,20 +11,22 @@
  * Related to: MRK-45 (Bug: Events missing from Market tab event list)
  */
 
-import { getUpcomingEvents } from '@/lib/dashboard/queries'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-// Mock service client
+// Create mock function outside to share reference
+const mockGetServiceClient = jest.fn()
+
+// Mock service client - use factory function to ensure dynamic import works
 jest.mock('@/lib/supabase/server/serviceClient', () => ({
-  getServiceClient: jest.fn(),
+  getServiceClient: mockGetServiceClient,
 }))
 
-import { getServiceClient } from '@/lib/supabase/server/serviceClient'
+// Import after mocks are set up
+import { getUpcomingEvents } from '@/lib/dashboard/queries'
 
 describe('getUpcomingEvents', () => {
   let mockSupabase: any
   let mockServiceClient: any
-  const mockGetServiceClient = getServiceClient as jest.Mock
 
   const FUTURE_DATE = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days from now
   const PAST_DATE = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days ago
@@ -107,6 +109,12 @@ describe('getUpcomingEvents', () => {
 
     it('should return empty array when no upcoming events exist', async () => {
       mockSupabase.order.mockResolvedValue({
+        data: [],
+        error: null,
+      })
+
+      // Also mock service client for fallback
+      mockServiceClient.order.mockResolvedValue({
         data: [],
         error: null,
       })
@@ -304,6 +312,12 @@ describe('getUpcomingEvents', () => {
       const nowDate = new Date().toISOString()
 
       mockSupabase.order.mockResolvedValue({
+        data: [],
+        error: null,
+      })
+
+      // Mock service client for fallback
+      mockServiceClient.order.mockResolvedValue({
         data: [],
         error: null,
       })

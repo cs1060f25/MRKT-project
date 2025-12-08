@@ -22,26 +22,26 @@ export async function POST(
       traceId: crypto.randomUUID() // Simple trace ID
     })
 
-    // 1. Fetch Open Asks (Sorted by Price DESC, Created At ASC)
-    // "Start with the highest ask ticket"
+    // 1. Fetch Open Asks (Sorted by Price ASC, Created At ASC)
+    // Cheapest asks first - maximizes transaction count
     const { data: asks, error: asksError } = await supabase
       .from('asks')
       .select('*')
       .eq('event_id', eventId)
       .eq('status', 'open')
-      .order('price_cents', { ascending: false })
+      .order('price_cents', { ascending: true })
       .order('created_at', { ascending: true })
 
     if (asksError) throw asksError
 
-    // 2. Fetch Open Bids (Sorted by Price DESC, Created At ASC)
-    // "match the highest bid to that ticket"
+    // 2. Fetch Open Bids (Sorted by Price ASC, Created At ASC)
+    // Lowest bids first - pairs cheapest viable bid with cheapest ask
     const { data: bids, error: bidsError } = await supabase
       .from('bids')
       .select('*')
       .eq('event_id', eventId)
       .eq('status', 'open')
-      .order('price_cents', { ascending: false })
+      .order('price_cents', { ascending: true })
       .order('created_at', { ascending: true })
 
     if (bidsError) throw bidsError
@@ -52,33 +52,30 @@ export async function POST(
     const asksToUpdate = []
     const bidsToUpdate = []
 
-    // 3. Matching Logic
-    // Iterate through Asks (Highest -> Lowest)
-    for (const ask of asks) {
-      if (ask.qty <= 0) continue
+    // 3. Matching Logic - Two-Pointer Algorithm for Maximum Liquidity
+    // Both lists sorted ascending: pairs cheapest ask with cheapest viable bid
+    // This maximizes the number of successful transactions
+    let askIdx = 0
+    let bidIdx = 0
 
-      // For each Ask, find eligible Bids
-      for (const bid of bids) {
-        if (bid.qty <= 0) continue
+    while (askIdx < asks.length && bidIdx < bids.length) {
+      const ask = asks[askIdx]
+      const bid = bids[bidIdx]
 
-        // Rule: No self-matching
-        if (ask.seller_id === bid.buyer_id) continue
+      // Skip exhausted orders
+      if (ask.qty <= 0) { askIdx++; continue }
+      if (bid.qty <= 0) { bidIdx++; continue }
 
-        // Rule: Bid must be >= Ask
-        // Since Bids are sorted by Price DESC, if we hit a bid lower than ask, 
-        // no subsequent bids will match this ask either.
-        if (bid.price_cents < ask.price_cents) break
+      // Rule: No self-matching
+      if (ask.seller_id === bid.buyer_id) { bidIdx++; continue }
 
+      // Rule: Bid must be >= Ask
+      if (bid.price_cents >= ask.price_cents) {
         // Match found!
-        // Rule: Quantity matching
         const matchQty = Math.min(ask.qty, bid.qty)
-
-        // Rule: Clearing price = Ask floor
-        const clearingPrice = ask.price_cents
-
-        // Generate IDs
+        const clearingPrice = ask.price_cents // Clearing price = ask floor
         const matchId = crypto.randomUUID()
-        
+
         // Prepare Match Record
         matchesToCreate.push({
           id: matchId,
@@ -89,51 +86,28 @@ export async function POST(
           qty: matchQty
         })
 
-        // Prepare Ticket Record(s) - One per unit or one per match?
-        // The schema has `tickets` linked to `match_id`.
-        // Usually tickets are individual items. 
-        // The `tickets` table has `match_id` FK. 
-        // If match qty is 2, do we create 1 ticket record or 2?
-        // Schema: `create table public.tickets ( match_id uuid ... qr_storage_path text ... )`
-        // It seems `tickets` table represents the transferred asset.
-        // If I buy 2 tickets, I probably expect 2 QR codes?
-        // However, the `asks` table has `qr_storage_path`.
-        // If the ask has `qty > 1` but only one `qr_storage_path`, it implies the QR is for the batch or they are identical?
-        // Or maybe `asks` should have multiple QRs?
-        // Looking at schema: `asks` has `qty` and `qr_storage_path` (singular).
-        // This suggests either the QR code allows entry for N people, or it's a simplification.
-        // I will create ONE ticket record per MATCH for now, preserving the `qr_storage_path`.
-        // Wait, if I sell 2 tickets to Person A, and 1 to Person B.
-        // I have 1 Match for A (qty 2) and 1 Match for B (qty 1).
-        // Each Match gets a Ticket record.
-        // That seems consistent with the schema structure.
-
-        // Only create ticket if QR code exists
-        // If QR is missing, match still succeeds but ticket creation is deferred
+        // Create ticket if QR code exists
         if (ask.qr_storage_path) {
           ticketsToCreate.push({
             id: crypto.randomUUID(),
             match_id: matchId,
             winner_id: bid.buyer_id,
             qr_storage_path: ask.qr_storage_path,
-            // Auto-deliver: ticket is immediately available since QR was uploaded at listing time
             delivered_at: new Date().toISOString(),
           })
         }
 
-        // Update In-Memory Quantities
+        // Update quantities
         ask.qty -= matchQty
         bid.qty -= matchQty
         matchesCount++
 
-        // If ask is exhausted, move to next ask
-        if (ask.qty <= 0) break
-
-        // Prepare Updates
-        // We defer DB updates to ensure we track the final state of each Ask/Bid
-        // But since we might match one Ask multiple times, or one Bid multiple times,
-        // we need to be careful not to overwrite previous updates in the list.
-        // Simplest strategy: Track modified IDs and final state.
+        // Advance pointers for exhausted orders
+        if (ask.qty <= 0) askIdx++
+        if (bid.qty <= 0) bidIdx++
+      } else {
+        // Bid too low for this ask - try next bid
+        bidIdx++
       }
     }
 

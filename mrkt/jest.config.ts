@@ -18,7 +18,16 @@ const config: Config = {
   // Test environment
   testEnvironment: 'jest-environment-jsdom',
 
-  // Setup files
+  // Force exit after tests complete (prevents hanging from async timers)
+  forceExit: true,
+
+  // Test timeout (10 seconds)
+  testTimeout: 10000,
+
+  // Setup files that run BEFORE test framework is installed (polyfills)
+  setupFiles: ['<rootDir>/jest.polyfills.js'],
+
+  // Setup files that run AFTER test framework is installed
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
 
   // Module name mapping for path aliases
