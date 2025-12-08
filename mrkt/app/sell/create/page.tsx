@@ -19,7 +19,11 @@ export const metadata = {
   description: 'List your event tickets for sale',
 }
 
-export default async function SellCreatePage() {
+export default async function SellCreatePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ eventId?: string }>
+}) {
   // ============================================================================
   // Authentication Check
   // ============================================================================
@@ -39,6 +43,16 @@ export default async function SellCreatePage() {
   // Fetch Upcoming Events
   // ============================================================================
   const eventsResult = await getUpcomingEvents(supabase)
+
+  // ============================================================================
+  // Validate URL eventId Parameter
+  // ============================================================================
+  const { eventId: urlEventId } = await searchParams
+
+  // Only pre-select if the eventId exists in the fetched events (which are already future-only)
+  const preselectedEventId = urlEventId && eventsResult.data.some(e => e.id === urlEventId)
+    ? urlEventId
+    : undefined
 
   // ============================================================================
   // Render Create Listing Form
@@ -123,6 +137,7 @@ export default async function SellCreatePage() {
                 starts_at: event.starts_at,
                 org: event.org,
               }))}
+              preselectedEventId={preselectedEventId}
             />
           )}
         </div>

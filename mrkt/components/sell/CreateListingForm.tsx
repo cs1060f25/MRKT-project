@@ -17,13 +17,14 @@ import type { EventOption } from '@/lib/sell/types'
 
 interface CreateListingFormProps {
   events: EventOption[]
+  preselectedEventId?: string
 }
 
-export function CreateListingForm({ events }: CreateListingFormProps) {
+export function CreateListingForm({ events, preselectedEventId }: CreateListingFormProps) {
   const router = useRouter()
 
   // Form state
-  const [eventId, setEventId] = useState('')
+  const [eventId, setEventId] = useState(preselectedEventId ?? '')
   const [priceInDollars, setPriceInDollars] = useState('')
   const [quantity, setQuantity] = useState('')
   const [qrFile, setQrFile] = useState<File | null>(null)

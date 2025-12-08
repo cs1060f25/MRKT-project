@@ -79,17 +79,12 @@ export function QRUploader({
     // Clear validation error
     setValidationError(null)
 
-    // Generate preview for images
-    if (selectedFile.type.startsWith('image/')) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setPreview(reader.result as string)
-      }
-      reader.readAsDataURL(selectedFile)
-    } else {
-      // PDF - no preview
-      setPreview(null)
+    // Generate preview for PNG image
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setPreview(reader.result as string)
     }
+    reader.readAsDataURL(selectedFile)
 
     // Notify parent
     onFileSelect(selectedFile)
@@ -203,8 +198,7 @@ export function QRUploader({
               <p className="pl-1">or drag and drop</p>
             </div>
             <p className="text-xs text-white/40 mt-2">
-              PNG, JPEG, or PDF up to{' '}
-              {formatFileSize(MAX_QR_FILE_SIZE)}
+              PNG only, up to {formatFileSize(MAX_QR_FILE_SIZE)}
             </p>
           </div>
         </div>

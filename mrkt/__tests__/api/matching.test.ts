@@ -38,6 +38,41 @@ describe('POST /api/events/[eventId]/match', () => {
   const TEST_BID_ID = 'bid_123'
   const TEST_MATCH_ID = 'match_123'
 
+  // Helper to create a chainable mock that supports double .order() chains
+  const createTableMock = (data: any[], error: any = null) => {
+    let chainState = {
+      selectCalled: false,
+      eqCalls: 0,
+      orderCalls: 0,
+    }
+
+    const chainable: any = {
+      select: jest.fn(() => {
+        chainState.selectCalled = true
+        return chainable
+      }),
+      eq: jest.fn(() => {
+        chainState.eqCalls++
+        return chainable
+      }),
+      order: jest.fn(() => {
+        chainState.orderCalls++
+        // On second order() call, return the promise with data
+        // (matching routes use .order().order() pattern)
+        if (chainState.orderCalls >= 2) {
+          return Promise.resolve({ data, error })
+        }
+        return chainable
+      }),
+      insert: jest.fn(() => Promise.resolve({ error })),
+      update: jest.fn(() => chainable),
+      // For update().eq() chain
+      then: (resolve: any) => resolve({ error }),
+    }
+
+    return chainable
+  }
+
   beforeEach(() => {
     jest.clearAllMocks()
 
@@ -77,62 +112,35 @@ describe('POST /api/events/[eventId]/match', () => {
 
   describe('Matching Algorithm - Success Cases', () => {
     it('should successfully match one ask with one bid', async () => {
-      // Mock asks query
+      const asksData = [
+        {
+          id: TEST_ASK_ID,
+          seller_id: 'seller_1',
+          event_id: TEST_EVENT_ID,
+          price_cents: 5000,
+          qty: 1,
+          status: 'open',
+          qr_storage_path: 'qr/ticket1.png',
+        },
+      ]
+
+      const bidsData = [
+        {
+          id: TEST_BID_ID,
+          buyer_id: 'buyer_1',
+          event_id: TEST_EVENT_ID,
+          price_cents: 6000,
+          qty: 1,
+          status: 'open',
+        },
+      ]
+
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'asks') {
-          return {
-            ...mockSupabase,
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            order: jest.fn().mockResolvedValue({
-              data: [
-                {
-                  id: TEST_ASK_ID,
-                  seller_id: 'seller_1',
-                  event_id: TEST_EVENT_ID,
-                  price_cents: 5000,
-                  qty: 1,
-                  status: 'open',
-                  qr_storage_path: 'qr/ticket1.png',
-                },
-              ],
-              error: null,
-            }),
-          }
-        }
-        if (table === 'bids') {
-          return {
-            ...mockSupabase,
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            order: jest.fn().mockResolvedValue({
-              data: [
-                {
-                  id: TEST_BID_ID,
-                  buyer_id: 'buyer_1',
-                  event_id: TEST_EVENT_ID,
-                  price_cents: 6000,
-                  qty: 1,
-                  status: 'open',
-                },
-              ],
-              error: null,
-            }),
-          }
-        }
-        if (table === 'matches') {
-          return {
-            ...mockSupabase,
-            insert: jest.fn().mockResolvedValue({ error: null }),
-          }
-        }
-        if (table === 'tickets') {
-          return {
-            ...mockSupabase,
-            insert: jest.fn().mockResolvedValue({ error: null }),
-          }
-        }
-        return mockSupabase
+        if (table === 'asks') return createTableMock(asksData)
+        if (table === 'bids') return createTableMock(bidsData)
+        if (table === 'matches') return createTableMock([], null)
+        if (table === 'tickets') return createTableMock([], null)
+        return createTableMock([])
       })
 
       const request = new NextRequest(
@@ -153,67 +161,41 @@ describe('POST /api/events/[eventId]/match', () => {
         event_id: TEST_EVENT_ID,
         ask_id: TEST_ASK_ID,
         bid_id: TEST_BID_ID,
-        clearing_price_cents: 5000, // Ask floor price
+        clearing_price_cents: 5500, // Midpoint: (5000 + 6000) / 2
         qty: 1,
       })
     })
 
     it('should handle partial quantity matching correctly', async () => {
+      const asksData = [
+        {
+          id: TEST_ASK_ID,
+          seller_id: 'seller_1',
+          event_id: TEST_EVENT_ID,
+          price_cents: 5000,
+          qty: 3,
+          status: 'open',
+          qr_storage_path: 'qr/ticket1.png',
+        },
+      ]
+
+      const bidsData = [
+        {
+          id: TEST_BID_ID,
+          buyer_id: 'buyer_1',
+          event_id: TEST_EVENT_ID,
+          price_cents: 6000,
+          qty: 2,
+          status: 'open',
+        },
+      ]
+
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'asks') {
-          return {
-            ...mockSupabase,
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            order: jest.fn().mockResolvedValue({
-              data: [
-                {
-                  id: TEST_ASK_ID,
-                  seller_id: 'seller_1',
-                  event_id: TEST_EVENT_ID,
-                  price_cents: 5000,
-                  qty: 3,
-                  status: 'open',
-                  qr_storage_path: 'qr/ticket1.png',
-                },
-              ],
-              error: null,
-            }),
-          }
-        }
-        if (table === 'bids') {
-          return {
-            ...mockSupabase,
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            order: jest.fn().mockResolvedValue({
-              data: [
-                {
-                  id: TEST_BID_ID,
-                  buyer_id: 'buyer_1',
-                  event_id: TEST_EVENT_ID,
-                  price_cents: 6000,
-                  qty: 2,
-                  status: 'open',
-                },
-              ],
-              error: null,
-            }),
-          }
-        }
-        if (table === 'matches') {
-          return {
-            ...mockSupabase,
-            insert: jest.fn().mockResolvedValue({ error: null }),
-          }
-        }
-        if (table === 'tickets') {
-          return {
-            ...mockSupabase,
-            insert: jest.fn().mockResolvedValue({ error: null }),
-          }
-        }
-        return mockSupabase
+        if (table === 'asks') return createTableMock(asksData)
+        if (table === 'bids') return createTableMock(bidsData)
+        if (table === 'matches') return createTableMock([], null)
+        if (table === 'tickets') return createTableMock([], null)
+        return createTableMock([])
       })
 
       const request = new NextRequest(
@@ -235,35 +217,20 @@ describe('POST /api/events/[eventId]/match', () => {
   describe('Matching Algorithm - No Match Cases', () => {
     it('should return zero matches when no asks exist', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'asks') {
-          return {
-            ...mockSupabase,
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            order: jest.fn().mockResolvedValue({ data: [], error: null }),
-          }
-        }
+        if (table === 'asks') return createTableMock([])
         if (table === 'bids') {
-          return {
-            ...mockSupabase,
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            order: jest.fn().mockResolvedValue({
-              data: [
-                {
-                  id: TEST_BID_ID,
-                  buyer_id: 'buyer_1',
-                  event_id: TEST_EVENT_ID,
-                  price_cents: 6000,
-                  qty: 1,
-                  status: 'open',
-                },
-              ],
-              error: null,
-            }),
-          }
+          return createTableMock([
+            {
+              id: TEST_BID_ID,
+              buyer_id: 'buyer_1',
+              event_id: TEST_EVENT_ID,
+              price_cents: 6000,
+              qty: 1,
+              status: 'open',
+            },
+          ])
         }
-        return mockSupabase
+        return createTableMock([])
       })
 
       const request = new NextRequest(
@@ -283,47 +250,31 @@ describe('POST /api/events/[eventId]/match', () => {
     it('should not match when bid price is below ask price', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
         if (table === 'asks') {
-          return {
-            ...mockSupabase,
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            order: jest.fn().mockResolvedValue({
-              data: [
-                {
-                  id: TEST_ASK_ID,
-                  seller_id: 'seller_1',
-                  event_id: TEST_EVENT_ID,
-                  price_cents: 7000,
-                  qty: 1,
-                  status: 'open',
-                  qr_storage_path: 'qr/ticket1.png',
-                },
-              ],
-              error: null,
-            }),
-          }
+          return createTableMock([
+            {
+              id: TEST_ASK_ID,
+              seller_id: 'seller_1',
+              event_id: TEST_EVENT_ID,
+              price_cents: 7000,
+              qty: 1,
+              status: 'open',
+              qr_storage_path: 'qr/ticket1.png',
+            },
+          ])
         }
         if (table === 'bids') {
-          return {
-            ...mockSupabase,
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            order: jest.fn().mockResolvedValue({
-              data: [
-                {
-                  id: TEST_BID_ID,
-                  buyer_id: 'buyer_1',
-                  event_id: TEST_EVENT_ID,
-                  price_cents: 5000, // Below ask price
-                  qty: 1,
-                  status: 'open',
-                },
-              ],
-              error: null,
-            }),
-          }
+          return createTableMock([
+            {
+              id: TEST_BID_ID,
+              buyer_id: 'buyer_1',
+              event_id: TEST_EVENT_ID,
+              price_cents: 5000, // Below ask price
+              qty: 1,
+              status: 'open',
+            },
+          ])
         }
-        return mockSupabase
+        return createTableMock([])
       })
 
       const request = new NextRequest(
@@ -345,47 +296,31 @@ describe('POST /api/events/[eventId]/match', () => {
 
       mockSupabase.from.mockImplementation((table: string) => {
         if (table === 'asks') {
-          return {
-            ...mockSupabase,
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            order: jest.fn().mockResolvedValue({
-              data: [
-                {
-                  id: TEST_ASK_ID,
-                  seller_id: SAME_USER_ID,
-                  event_id: TEST_EVENT_ID,
-                  price_cents: 5000,
-                  qty: 1,
-                  status: 'open',
-                  qr_storage_path: 'qr/ticket1.png',
-                },
-              ],
-              error: null,
-            }),
-          }
+          return createTableMock([
+            {
+              id: TEST_ASK_ID,
+              seller_id: SAME_USER_ID,
+              event_id: TEST_EVENT_ID,
+              price_cents: 5000,
+              qty: 1,
+              status: 'open',
+              qr_storage_path: 'qr/ticket1.png',
+            },
+          ])
         }
         if (table === 'bids') {
-          return {
-            ...mockSupabase,
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            order: jest.fn().mockResolvedValue({
-              data: [
-                {
-                  id: TEST_BID_ID,
-                  buyer_id: SAME_USER_ID, // Same as seller
-                  event_id: TEST_EVENT_ID,
-                  price_cents: 6000,
-                  qty: 1,
-                  status: 'open',
-                },
-              ],
-              error: null,
-            }),
-          }
+          return createTableMock([
+            {
+              id: TEST_BID_ID,
+              buyer_id: SAME_USER_ID, // Same as seller
+              event_id: TEST_EVENT_ID,
+              price_cents: 6000,
+              qty: 1,
+              status: 'open',
+            },
+          ])
         }
-        return mockSupabase
+        return createTableMock([])
       })
 
       const request = new NextRequest(
@@ -407,17 +342,9 @@ describe('POST /api/events/[eventId]/match', () => {
     it('should return 500 when asks query fails', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
         if (table === 'asks') {
-          return {
-            ...mockSupabase,
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            order: jest.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'Database connection error' },
-            }),
-          }
+          return createTableMock(null as any, { message: 'Database connection error' })
         }
-        return mockSupabase
+        return createTableMock([])
       })
 
       const request = new NextRequest(
@@ -435,57 +362,40 @@ describe('POST /api/events/[eventId]/match', () => {
     })
 
     it('should return 500 when match insertion fails', async () => {
+      const asksData = [
+        {
+          id: TEST_ASK_ID,
+          seller_id: 'seller_1',
+          event_id: TEST_EVENT_ID,
+          price_cents: 5000,
+          qty: 1,
+          status: 'open',
+          qr_storage_path: 'qr/ticket1.png',
+        },
+      ]
+
+      const bidsData = [
+        {
+          id: TEST_BID_ID,
+          buyer_id: 'buyer_1',
+          event_id: TEST_EVENT_ID,
+          price_cents: 6000,
+          qty: 1,
+          status: 'open',
+        },
+      ]
+
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'asks') {
-          return {
-            ...mockSupabase,
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            order: jest.fn().mockResolvedValue({
-              data: [
-                {
-                  id: TEST_ASK_ID,
-                  seller_id: 'seller_1',
-                  event_id: TEST_EVENT_ID,
-                  price_cents: 5000,
-                  qty: 1,
-                  status: 'open',
-                  qr_storage_path: 'qr/ticket1.png',
-                },
-              ],
-              error: null,
-            }),
-          }
-        }
-        if (table === 'bids') {
-          return {
-            ...mockSupabase,
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            order: jest.fn().mockResolvedValue({
-              data: [
-                {
-                  id: TEST_BID_ID,
-                  buyer_id: 'buyer_1',
-                  event_id: TEST_EVENT_ID,
-                  price_cents: 6000,
-                  qty: 1,
-                  status: 'open',
-                },
-              ],
-              error: null,
-            }),
-          }
-        }
+        if (table === 'asks') return createTableMock(asksData)
+        if (table === 'bids') return createTableMock(bidsData)
         if (table === 'matches') {
           return {
-            ...mockSupabase,
             insert: jest.fn().mockResolvedValue({
               error: { message: 'Foreign key constraint violation' },
             }),
           }
         }
-        return mockSupabase
+        return createTableMock([])
       })
 
       const request = new NextRequest(
@@ -504,65 +414,40 @@ describe('POST /api/events/[eventId]/match', () => {
   })
 
   describe('Clearing Price Logic', () => {
-    it('should set clearing price to ask floor (ask price)', async () => {
+    it('should set clearing price to midpoint between bid and ask', async () => {
       const ASK_PRICE = 5000
       const BID_PRICE = 7000
+      const EXPECTED_MIDPOINT = Math.floor((ASK_PRICE + BID_PRICE) / 2) // 6000
+
+      const asksData = [
+        {
+          id: TEST_ASK_ID,
+          seller_id: 'seller_1',
+          event_id: TEST_EVENT_ID,
+          price_cents: ASK_PRICE,
+          qty: 1,
+          status: 'open',
+          qr_storage_path: 'qr/ticket1.png',
+        },
+      ]
+
+      const bidsData = [
+        {
+          id: TEST_BID_ID,
+          buyer_id: 'buyer_1',
+          event_id: TEST_EVENT_ID,
+          price_cents: BID_PRICE,
+          qty: 1,
+          status: 'open',
+        },
+      ]
 
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'asks') {
-          return {
-            ...mockSupabase,
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            order: jest.fn().mockResolvedValue({
-              data: [
-                {
-                  id: TEST_ASK_ID,
-                  seller_id: 'seller_1',
-                  event_id: TEST_EVENT_ID,
-                  price_cents: ASK_PRICE,
-                  qty: 1,
-                  status: 'open',
-                  qr_storage_path: 'qr/ticket1.png',
-                },
-              ],
-              error: null,
-            }),
-          }
-        }
-        if (table === 'bids') {
-          return {
-            ...mockSupabase,
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            order: jest.fn().mockResolvedValue({
-              data: [
-                {
-                  id: TEST_BID_ID,
-                  buyer_id: 'buyer_1',
-                  event_id: TEST_EVENT_ID,
-                  price_cents: BID_PRICE,
-                  qty: 1,
-                  status: 'open',
-                },
-              ],
-              error: null,
-            }),
-          }
-        }
-        if (table === 'matches') {
-          return {
-            ...mockSupabase,
-            insert: jest.fn().mockResolvedValue({ error: null }),
-          }
-        }
-        if (table === 'tickets') {
-          return {
-            ...mockSupabase,
-            insert: jest.fn().mockResolvedValue({ error: null }),
-          }
-        }
-        return mockSupabase
+        if (table === 'asks') return createTableMock(asksData)
+        if (table === 'bids') return createTableMock(bidsData)
+        if (table === 'matches') return createTableMock([], null)
+        if (table === 'tickets') return createTableMock([], null)
+        return createTableMock([])
       })
 
       const request = new NextRequest(
@@ -576,7 +461,7 @@ describe('POST /api/events/[eventId]/match', () => {
       const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data.matches[0].clearing_price_cents).toBe(ASK_PRICE)
+      expect(data.matches[0].clearing_price_cents).toBe(EXPECTED_MIDPOINT)
     })
   })
 })
