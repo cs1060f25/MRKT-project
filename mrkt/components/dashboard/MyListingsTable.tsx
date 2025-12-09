@@ -10,12 +10,37 @@
 import type { Ask } from '@/lib/dashboard/types'
 import { formatPrice, formatDateTime, formatStatus, getStatusColor } from '@/lib/utils/format'
 import { EmptyState } from '@/components/common/EmptyState'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 interface MyListingsTableProps {
   listings: Ask[]
 }
 
 export function MyListingsTable({ listings }: MyListingsTableProps) {
+  const router = useRouter()
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  async function handleDelete(askId: string) {
+    if (!askId) return
+    const confirm = window.confirm('Delete this listing? This action cannot be undone.')
+    if (!confirm) return
+    try {
+      setDeletingId(askId)
+      const res = await fetch(`/api/listings/${askId}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body?.error || 'Failed to delete listing')
+      }
+      router.refresh()
+    } catch (err) {
+      console.error('[MyListingsTable] Delete error:', err)
+      alert(err instanceof Error ? err.message : 'Failed to delete listing')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   if (listings.length === 0) {
     return (
       <EmptyState
@@ -92,14 +117,29 @@ export function MyListingsTable({ listings }: MyListingsTableProps) {
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                  <button
-                    type="button"
-                    disabled
-                    title="QR upload coming soon"
-                    className="text-white/30 cursor-not-allowed font-medium"
-                  >
-                    Upload QR
-                  </button>
+                  <div className="flex items-center justify-end gap-4">
+                    <button
+                      type="button"
+                      disabled
+                      title="QR upload coming soon"
+                      className="text-white/30 cursor-not-allowed font-medium"
+                    >
+                      Upload QR
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(listing.id)}
+                      disabled={listing.status !== 'open' || deletingId === listing.id}
+                      className={`font-medium transition-colors ${
+                        listing.status !== 'open' || deletingId === listing.id
+                          ? 'text-white/30 cursor-not-allowed'
+                          : 'text-red-400 hover:text-red-300'
+                      }`}
+                      title={listing.status !== 'open' ? 'Only open listings can be deleted' : 'Delete listing'}
+                    >
+                      {deletingId === listing.id ? 'Deleting…' : 'Delete'}
+                    </button>
+                  </div>
                 </td>
               </tr>
             )
