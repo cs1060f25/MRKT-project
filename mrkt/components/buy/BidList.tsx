@@ -9,12 +9,37 @@
 'use client'
 
 import type { UserBid } from '@/lib/buy/types'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 interface BidListProps {
   bids: UserBid[]
 }
 
 export function BidList({ bids }: BidListProps) {
+  const router = useRouter()
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  async function handleDelete(bidId: string) {
+    if (!bidId) return
+    const confirm = window.confirm('Delete this bid? This action cannot be undone.')
+    if (!confirm) return
+    try {
+      setDeletingId(bidId)
+      const res = await fetch(`/api/bids/${bidId}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body?.error || 'Failed to delete bid')
+      }
+      router.refresh()
+    } catch (err) {
+      console.error('[BidList] Delete error:', err)
+      alert(err instanceof Error ? err.message : 'Failed to delete bid')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   if (bids.length === 0) {
     return (
       <div className="glass rounded-2xl border border-white/10 p-8">
@@ -90,6 +115,21 @@ export function BidList({ bids }: BidListProps) {
                     <span className="text-white/30">•</span>
                     <span>{createdDate}</span>
                   </div>
+                </div>
+                <div className="ml-4 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(bid.id)}
+                    disabled={bid.status !== 'open' || deletingId === bid.id}
+                    className={`text-sm font-medium transition-colors ${
+                      bid.status !== 'open' || deletingId === bid.id
+                        ? 'text-white/30 cursor-not-allowed'
+                        : 'text-red-400 hover:text-red-300'
+                    }`}
+                    title={bid.status !== 'open' ? 'Only open bids can be deleted' : 'Delete bid'}
+                  >
+                    {deletingId === bid.id ? 'Deleting…' : 'Delete'}
+                  </button>
                 </div>
               </div>
             </li>
